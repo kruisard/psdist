@@ -416,6 +416,44 @@ def corner(
     return axes
 
 
+# Plotly
+# --------------------------------------------------------------------
+def plotly_wire(data=None, x=None, y=None, layout=None, uaxis=None):
+    Z = data
+    if x is None:
+        x = np.arange(Z.shape[0])
+    if y is None:
+        y = np.arange(Z.shape[1])
+    X, Y = np.meshgrid(x, y, indexing='ij')    
+    lines = []
+    line_marker = dict(color='black', width=3)
+    for x, y, z in zip(X, Y, Z):
+        lines.append(go.Scatter3d(x=x, y=y, z=z, mode='lines', line=line_marker))
+
+    if uaxis is None:
+        uaxis= dict(
+            gridcolor='rgb(255, 255, 255)',
+            zerolinecolor='rgb(255, 255, 255)',
+            showbackground=True,
+            backgroundcolor='rgb(230, 230,230)',
+        )
+    if layout is None:
+        layout = go.Layout(
+            width=500,
+            height=500,
+            showlegend=False,
+        )
+    fig = go.Figure(data=lines, layout=layout)
+    fig.update_layout(
+        scene=dict(
+            xaxis=uaxis, 
+            yaxis=uaxis,
+            zaxis=uaxis,
+        ),
+    )
+    return fig
+
+
 # Interactive
 # ------------------------------------------------------------------------------
 def interactive_proj2d(
@@ -1007,41 +1045,3 @@ def interactive_proj1d(
         kws[f"slider{i}"] = slider
     gui = interactive(update, **kws)
     return gui
-
-
-# Plotly
-# --------------------------------------------------------------------
-def plotly_wire(data=None, x=None, y=None, layout=None, uaxis=None):
-    Z = data
-    if x is None:
-        x = np.arange(Z.shape[0])
-    if y is None:
-        y = np.arange(Z.shape[1])
-    X, Y = np.meshgrid(x, y, indexing='ij')    
-    lines = []
-    line_marker = dict(color='black', width=3)
-    for x, y, z in zip(X, Y, Z):
-        lines.append(go.Scatter3d(x=x, y=y, z=z, mode='lines', line=line_marker))
-
-    if uaxis is None:
-        uaxis= dict(
-            gridcolor='rgb(255, 255, 255)',
-            zerolinecolor='rgb(255, 255, 255)',
-            showbackground=True,
-            backgroundcolor='rgb(230, 230,230)',
-        )
-    if layout is None:
-        layout = go.Layout(
-            width=500,
-            height=500,
-            showlegend=False,
-        )
-    fig = go.Figure(data=lines, layout=layout)
-    fig.update_layout(
-        scene=dict(
-            xaxis=uaxis, 
-            yaxis=uaxis,
-            zaxis=uaxis,
-        ),
-    )
-    return fig
