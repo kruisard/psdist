@@ -142,6 +142,7 @@ def plot_image(
     return_mesh=False,
     handle_log="floor",
     fill_value=None,
+    mask_zero=False,
     **plot_kws,
 ):
     """Plot 2D image."""
@@ -159,6 +160,8 @@ def plot_image(
                 plot_kws["colorbar_kw"] = dict()
             plot_kws["colorbar_kw"]["formatter"] = "log"
         image = prep_image_for_log(image, handle_log)
+    if mask_zero:
+        image = np.ma.masked_less_equal(image, 0)
     if contour_kws is None:
         contour_kws = dict()
     contour_kws.setdefault("color", "white")
