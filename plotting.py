@@ -1048,3 +1048,175 @@ def interactive_proj1d(
         kws[f"slider{i}"] = slider
     gui = interactive(update, **kws)
     return gui
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def interactive_proj2d_discrete(
+    X,
+    limits=None,
+    nbins=10,
+    default_ind=(0, 1),
+    slice_type="int",  # {'int', 'range'}
+    dims=None,
+    units=None,
+    **plot_kws,
+):
+    n = X.shape[1]
+    if limits is None:
+        limits = [(np.min(X[:, i]), np.max(X[:, i])) for i in range(n)]
+    if dims is None:
+        dims = [f"x{i + 1}" for i in range(n)]
+    if units is None:
+        units = n * [""]
+    dims_units = []
+    for dim, unit in zip(dims, units):
+        dims_units.append(f"{dim}" + f" [{unit}]" if unit != "" else dim)
+    plot_kws.setdefault("colorbar", True)
+
+    # Widgets
+    dim1 = widgets.Dropdown(options=dims, index=default_ind[0], description="dim 1")
+    dim2 = widgets.Dropdown(options=dims, index=default_ind[1], description="dim 2")
+    nbins = widgets.IntSlider(min=1, max=100, value=10, description='grid res')
+    nbins_plot = widgets.IntSlider(min=1, max=100, value=10, description='plot res')
+    autobin = widgets.Checkbox(description='auto plot res', value=False)
+    log = widgets.Checkbox(description='log', value=False)
+    sliders, checks = [], []
+    for k in range(n):
+        if slice_type == "int":
+            slider = widgets.IntSlider(
+                min=0,
+                max=100,
+                value=0,
+                description=dims[k],
+                continuous_update=True,
+            )
+        elif slice_type == "range":
+            slider = widgets.IntRangeSlider(
+                value=(0, 100),
+                min=0,
+                max=100,
+                description=dims[k],
+                continuous_update=True,
+            )
+        else:
+            raise ValueError("Invalid `slice_type`.")
+        slider.layout.display = "none"
+        sliders.append(slider)
+        checks.append(widgets.Checkbox(description=f"slice {dims[k]}"))
+
+    # Hide/show sliders.
+    def hide(button):
+        for k in range(n):
+            # Hide elements for dimensions being plotted.
+            valid = dims[k] not in (dim1.value, dim2.value)
+            disp = None if valid else "none"
+            for element in [sliders[k], checks[k]]:
+                element.layout.display = disp
+            # Uncheck boxes for dimensions being plotted.
+            if not valid and checks[k].value:
+                checks[k].value = False
+            # Make sliders respond to check boxes.
+            if not checks[k].value:
+                sliders[k].layout.display = "none"
+                
+    for element in (dim1, dim2, *checks):
+        element.observe(hide, names="value")
+        
+    # Initial hide
+    for k in range(n):
+        if k in default_ind:
+            checks[k].layout.display = "none"
+            sliders[k].layout.display = "none"
+                                                  
+    def update(
+        dim1,
+        dim2,
+        check1,
+        check2,
+        check3,
+        check4,
+        check5,
+        check6,
+        slider1,
+        slider2,
+        slider3,
+        slider4,
+        slider5,
+        slider6,
+        log,
+        nbins,
+        nbins_plot,
+        autobin,
+    ):
+        if dim1 == dim2:
+            return
+        checks = [check1, check2, check3, check4, check5, check6]
+        sliders = [slider1, slider2, slider3, slider4, slider5, slider6]        
+        for dim, check in zip(dims, checks):
+            if check and dim in (dim1, dim2):
+                return
+        checks = checks[:n]
+        sliders = sliders[:n]
+            
+        # Find particles within box.
+        axis_view = [dims.index(dim) for dim in (dim1, dim2)]
+        axis_slice = [dims.index(dim) for dim, check in zip(dims, checks) if check]
+        conditions = []
+        for i in range(n):
+            if i in axis_slice:
+                bin_width = np.abs(limits[i][1] - limits[i][0]) / nbins
+                ind = sliders[i]
+                if type(ind) is int:
+                    ind = (ind, ind + 1)
+                umin = limits[i][0] + ind[0] * bin_width
+                umax = limits[i][0] + ind[1] * bin_width
+            else:
+                umin = -np.inf
+                umax = +np.inf
+            conditions.append(X[:, i] > umin)
+            conditions.append(X[:, i] < umax)
+            idx = np.logical_and.reduce(conditions)
+        
+        # Compute 2D histogram of remaining particles.
+        _X = X[idx]
+        _X = _X[:, axis_view]
+        _nbins = 'auto' if autobin else nbins_plot
+        xedges = np.histogram_bin_edges(_X[:, 0], bins=_nbins, range=limits[axis_view[0]])
+        yedges = np.histogram_bin_edges(_X[:, 1], bins=_nbins, range=limits[axis_view[1]])
+        edges = [xedges, yedges]
+        im, _ = np.histogramdd(_X, bins=edges)
+        centers = [utils.get_bin_centers(e) for e in edges]
+        
+        # Plot image.
+        plot_kws['norm'] = 'log' if log else None
+        fig, ax = pplt.subplots()
+        plot_image(im, x=centers[0], y=centers[1], ax=ax, **plot_kws)
+        ax.format(xlabel=dims_units[axis_view[0]], ylabel=dims_units[axis_view[1]])
+        plt.show()
+
+    kws = dict()
+    kws["dim1"] = dim1
+    kws["dim2"] = dim2
+    for i, check in enumerate(checks, start=1):
+        kws[f"check{i}"] = check
+    for i, slider in enumerate(sliders, start=1):
+        kws[f"slider{i}"] = slider
+    kws["log"] = log
+    kws["nbins"] = nbins
+    kws["nbins_plot"] = nbins_plot
+    kws["autobin"] = autobin
+    return interactive(update, **kws)
