@@ -1088,12 +1088,14 @@ def interactive_proj2d_discrete(
     plot_kws.setdefault("colorbar", True)
 
     # Widgets
+    nbins_default = nbins
     dim1 = widgets.Dropdown(options=dims, index=default_ind[0], description="dim 1")
     dim2 = widgets.Dropdown(options=dims, index=default_ind[1], description="dim 2")
-    nbins = widgets.IntSlider(min=1, max=100, value=10, description='grid res')
-    nbins_plot = widgets.IntSlider(min=1, max=100, value=10, description='plot res')
+    nbins = widgets.IntSlider(min=1, max=100, value=nbins_default, description='grid res')
+    nbins_plot = widgets.IntSlider(min=1, max=100, value=nbins_default, description='plot res')
     autobin = widgets.Checkbox(description='auto plot res', value=False)
     log = widgets.Checkbox(description='log', value=False)
+    prof = widgets.Checkbox(description='profiles', value=False)
     sliders, checks = [], []
     for k in range(n):
         if slice_type == "int":
@@ -1158,6 +1160,7 @@ def interactive_proj2d_discrete(
         slider5,
         slider6,
         log,
+        prof,
         nbins,
         nbins_plot,
         autobin,
@@ -1203,6 +1206,7 @@ def interactive_proj2d_discrete(
         
         # Plot image.
         plot_kws['norm'] = 'log' if log else None
+        plot_kws['profx'] = plot_kws['profy'] = prof
         fig, ax = pplt.subplots()
         plot_image(im, x=centers[0], y=centers[1], ax=ax, **plot_kws)
         ax.format(xlabel=dims_units[axis_view[0]], ylabel=dims_units[axis_view[1]])
@@ -1216,6 +1220,7 @@ def interactive_proj2d_discrete(
     for i, slider in enumerate(sliders, start=1):
         kws[f"slider{i}"] = slider
     kws["log"] = log
+    kws["prof"] = prof
     kws["nbins"] = nbins
     kws["nbins_plot"] = nbins_plot
     kws["autobin"] = autobin
