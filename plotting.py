@@ -1075,6 +1075,8 @@ def interactive_proj2d_discrete(
     units=None,
     **plot_kws,
 ):
+    """Right now, it only works for 6D data. Need to find a way to 
+    make it work easily for ND data."""
     n = X.shape[1]
     if limits is None:
         limits = [(np.min(X[:, i]), np.max(X[:, i])) for i in range(n)]
@@ -1088,10 +1090,11 @@ def interactive_proj2d_discrete(
     plot_kws.setdefault("colorbar", True)
 
     # Widgets
+    nbins_default = nbins
     dim1 = widgets.Dropdown(options=dims, index=default_ind[0], description="dim 1")
     dim2 = widgets.Dropdown(options=dims, index=default_ind[1], description="dim 2")
-    nbins = widgets.IntSlider(min=1, max=100, value=10, description='grid res')
-    nbins_plot = widgets.IntSlider(min=1, max=100, value=10, description='plot res')
+    nbins = widgets.IntSlider(min=1, max=100, value=nbins_default, description='grid res')
+    nbins_plot = widgets.IntSlider(min=1, max=100, value=nbins_default, description='plot res')
     autobin = widgets.Checkbox(description='auto plot res', value=False)
     log = widgets.Checkbox(description='log', value=False)
     sliders, checks = [], []
