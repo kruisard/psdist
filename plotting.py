@@ -1075,6 +1075,8 @@ def interactive_proj2d_discrete(
     units=None,
     **plot_kws,
 ):
+    """Right now, it only works for 6D data. Need to find a way to 
+    make it work easily for ND data."""
     n = X.shape[1]
     if limits is None:
         limits = [(np.min(X[:, i]), np.max(X[:, i])) for i in range(n)]
