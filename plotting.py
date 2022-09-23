@@ -1145,6 +1145,8 @@ def interactive_proj2d_discrete(
             sliders[k].layout.display = "none"
                                                   
     def update(
+        log,
+        prof,
         dim1,
         dim2,
         check1,
@@ -1159,8 +1161,6 @@ def interactive_proj2d_discrete(
         slider4,
         slider5,
         slider6,
-        log,
-        prof,
         nbins,
         nbins_plot,
         autobin,
@@ -1215,13 +1215,13 @@ def interactive_proj2d_discrete(
     kws = dict()
     kws["dim1"] = dim1
     kws["dim2"] = dim2
+    kws["log"] = log
+    kws["prof"] = prof
+    kws["autobin"] = autobin
     for i, check in enumerate(checks, start=1):
         kws[f"check{i}"] = check
     for i, slider in enumerate(sliders, start=1):
         kws[f"slider{i}"] = slider
-    kws["log"] = log
-    kws["prof"] = prof
     kws["nbins"] = nbins
     kws["nbins_plot"] = nbins_plot
-    kws["autobin"] = autobin
     return interactive(update, **kws)
