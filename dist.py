@@ -115,8 +115,8 @@ def slice_ellipsoid(X, axis=0, limits=None):
     return X[idx]
 
 
-def histogram(X, bins=None, binrange=None):
-    """Multi-dimensional histogram with auto bins along each axis."""
+def histogram_bin_edges(X, bins=None, binrange=None):
+    """Multi-dimensional histogram bin edges."""
     if bins is None:
         bins = 10
     if type(bins) is not list:
@@ -125,4 +125,9 @@ def histogram(X, bins=None, binrange=None):
         binrange = X.shape[1] * [binrange] 
     edges = [np.histogram_bin_edges(X[:, i], bins[i], binrange[i]) 
              for i in range(X.shape[1])]
+    
+    
+def histogram(X, bins=None, binrange=None):
+    """Multi-dimensional histogram."""
+    edges = histogram_bin_edges(X, bins=None, binrange=None)
     return np.histogramdd(X, bins=edges)
