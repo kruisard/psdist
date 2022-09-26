@@ -1,1 +1,31 @@
 """N-dimensional images."""
+
+
+def make_slice(n, axis=0, ind=0):
+    """Return a slice index."""
+    if type(axis) is int:
+        axis = [axis]
+    if type(ind) is int:
+        ind = [ind]
+    idx = n * [slice(None)]
+    for k, i in zip(axis, ind):
+        if i is None:
+            continue
+        elif type(i) is tuple and len(i) == 2:
+            idx[k] = slice(i[0], i[1])
+        else:
+            idx[k] = i
+    return tuple(idx)
+
+
+def project(image, axis=0):
+    """Project array onto one or more axes."""
+    if type(axis) is int:
+        axis = [axis]
+    axis_sum = tuple([i for i in range(image.ndim) if i not in axis])
+    proj = np.sum(image, axis=axis_sum)
+    # Handle out of order projection. Right now it just handles 2D, but
+    # it should be extended to higher dimensions.
+    if proj.ndim == 2 and axis[0] > axis[1]:
+        proj = np.moveaxis(proj, 0, 1)
+    return proj
