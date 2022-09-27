@@ -129,5 +129,5 @@ def histogram_bin_edges(X, bins=None, binrange=None):
     
 def histogram(X, bins=None, binrange=None):
     """Multi-dimensional histogram."""
-    edges = histogram_bin_edges(X, bins=None, binrange=None)
+    edges = histogram_bin_edges(X, bins=bins, binrange=binrange)
     return np.histogramdd(X, bins=edges)
