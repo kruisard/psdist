@@ -1,5 +1,6 @@
 """Particle distributions (point clouds)."""
 import numpy as np
+from . import utils
 
 
 def radial_extent(X, fraction=1.0):
@@ -115,19 +116,22 @@ def slice_ellipsoid(X, axis=0, limits=None):
     return X[idx]
 
 
-def histogram_bin_edges(X, bins=None, binrange=None):
+def histogram_bin_edges(X, bins=10, binrange=None):
     """Multi-dimensional histogram bin edges."""
-    if bins is None:
-        bins = 10
     if type(bins) is not list:
         bins = X.shape[1] * [bins]
     if type(binrange) is not list:
         binrange = X.shape[1] * [binrange] 
     edges = [np.histogram_bin_edges(X[:, i], bins[i], binrange[i]) 
              for i in range(X.shape[1])]
+    return edges
     
     
-def histogram(X, bins=None, binrange=None):
+def histogram(X, bins=10, binrange=None, centers=False):
     """Multi-dimensional histogram."""
-    edges = histogram_bin_edges(X, bins=bins, binrange=binrange)
-    return np.histogramdd(X, bins=edges)
+    edges = histogram_bin_edges(X, bins=bins, binrange=binrange)        
+    image, edges = np.histogramdd(X, bins=edges)
+    if centers:
+        return image, [utils.get_bin_centers(e) for e in edges]
+    else:
+        return image, edges
