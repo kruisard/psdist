@@ -2,7 +2,21 @@
 
 
 def make_slice(n, axis=0, ind=0):
-    """Return a slice index."""
+    """Return a slice index array.
+    
+    n : int
+        The length of the slice index. 
+    axis : list[int]
+        The sliced axes.
+    ind : list[int] or list[tuple]
+        The indices along the sliced axes. If a tuple is provided, this
+        defines the (min, max) index.
+        
+    Returns
+    -------
+    idx : tuple
+        The slice index array.
+    """
     if type(axis) is int:
         axis = [axis]
     if type(ind) is int:
@@ -19,7 +33,22 @@ def make_slice(n, axis=0, ind=0):
 
 
 def project(image, axis=0):
-    """Project array onto one or more axes."""
+    """Project image onto one or more axes.
+    
+    Parameters
+    ----------
+    image : ndarray
+        An n-dimensional image.
+    axis : list[int]
+        The axes onto which the image is projected, i.e., the
+        axes which are not summed over. Can be an int or list
+        or ints.
+    
+    Returns
+    -------
+    proj : ndarray
+        The projection of `image` onto the specified axis.
+    """
     if type(axis) is int:
         axis = [axis]
     axis_sum = tuple([i for i in range(image.ndim) if i not in axis])
