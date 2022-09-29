@@ -1,5 +1,6 @@
 """Particle distributions (point clouds)."""
 import numpy as np
+from . import utils
 
 
 def radial_extent(X, fraction=1.0):
@@ -23,7 +24,7 @@ def radial_extent(X, fraction=1.0):
     return radius
 
 
-def slice_box(X, axis=None, limits=None):
+def slice_box(X, axis=None, center=None, width=None):
     """Return points within box.
     
     Parameters
@@ -33,23 +34,30 @@ def slice_box(X, axis=None, limits=None):
     axis : tuple
         Slice axes. For example, (0, 1) will slice along the first and
         second axes of the array.
-    limits : list[tuple]
-        List of (min, max) pairs defining the edges of a box.
+    center : ndarray, shape (d,)
+        The center of the box.
+    width : ndarray, shape (d,)
+        The width of the box along each axis.
         
     Returns
     -------
     ndarray, shape (m, d)
         Points within the box.
     """
-    n = X.shape[1]
+    d = X.shape[1]
     if axis is None:
-        axis = tuple(range(n))
+        axis = tuple(range(d))
     if type(axis) is not tuple:
         axis = (axis,)
-    if limits is None:
-        limits = n * [(-np.inf, np.inf)]
-    if type(limits) is not list:
-        limits = [limits]
+    if center is None:
+        center = np.zeros(d)
+    if width is None:
+        width = 1.1 * np.abs(np.max(X, axis=0) - np.min(X, axis=0))
+    if type(center) in [int, float]:
+        center = np.full(d, center)
+    if type(width) in [int, float]:
+        width = np.full(d, width)
+    limits = list(zip(center - 0.5 * width, center + 0.5 * width))
     conditions = []
     for i, (umin, umax) in zip(axis, limits):
         conditions.append(X[:, i] > umin)
@@ -115,19 +123,22 @@ def slice_ellipsoid(X, axis=0, limits=None):
     return X[idx]
 
 
-def histogram_bin_edges(X, bins=None, binrange=None):
+def histogram_bin_edges(X, bins=10, binrange=None):
     """Multi-dimensional histogram bin edges."""
-    if bins is None:
-        bins = 10
     if type(bins) is not list:
         bins = X.shape[1] * [bins]
     if type(binrange) is not list:
         binrange = X.shape[1] * [binrange] 
     edges = [np.histogram_bin_edges(X[:, i], bins[i], binrange[i]) 
              for i in range(X.shape[1])]
+    return edges
     
     
-def histogram(X, bins=None, binrange=None):
+def histogram(X, bins=10, binrange=None, centers=False):
     """Multi-dimensional histogram."""
-    edges = histogram_bin_edges(X, bins=None, binrange=None)
-    return np.histogramdd(X, bins=edges)
+    edges = histogram_bin_edges(X, bins=bins, binrange=binrange)        
+    image, edges = np.histogramdd(X, bins=edges)
+    if centers:
+        return image, [utils.get_bin_centers(e) for e in edges]
+    else:
+        return image, edges
