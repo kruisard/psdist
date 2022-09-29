@@ -11,6 +11,7 @@ from scipy import optimize as opt
 import seaborn as sns
 import skimage
 
+from . import image as bi
 from . import utils
 
 
@@ -147,6 +148,8 @@ def plot_image(
 ):
     """Plot 2D image."""
     plot_kws.setdefault("ec", "None")
+    plot_kws.setdefault("linewidth", 0.0)
+    plot_kws.setdefault("rasterized", True)
     log = "norm" in plot_kws and plot_kws["norm"] == "log"
     if fill_value is not None:
         image = np.ma.filled(image, fill_value=fill_value)
@@ -396,7 +399,7 @@ def corner(
                 else:
                     profx = profy = prof
                 plot_image(
-                    utils.project(data, (j, ii + 1)),
+                    bi.project(data, (j, ii + 1)),
                     x=coords[j],
                     y=coords[ii + 1],
                     ax=ax,
@@ -408,7 +411,7 @@ def corner(
         # Univariate plots
         if diag:
             for i in range(n):
-                h = utils.project(data, i)
+                h = bi.project(data, i)
                 plot1d(coords[i], h / np.max(h), ax=axes[i, i], **diag_kws)
     # Modify diagonal y axis limits.
     if diag:
@@ -793,8 +796,8 @@ def interactive_proj2d(
             if type(ind[k]) is int:
                 ind[k] = (ind[k], ind[k] + 1)
         ind = [ind[k] for k in axis_slice]
-        H = f[utils.make_slice(f.ndim, axis_slice, ind)]
-        H = utils.project(H, axis_view)
+        H = f[bi.make_slice(f.ndim, axis_slice, ind)]
+        H = bi.project(H, axis_view)
         H = np.ma.masked_less_equal(H, 10.0 ** thresh)
         plot_kws.update(
             {
@@ -1025,8 +1028,8 @@ def interactive_proj1d(
             if type(ind[k]) is int:
                 ind[k] = (ind[k], ind[k] + 1)
         ind = [ind[k] for k in axis_slice]
-        _f = f[utils.make_slice(f.ndim, axis_slice, ind)]
-        p = utils.project(_f, axis_view)
+        _f = f[bi.make_slice(f.ndim, axis_slice, ind)]
+        p = bi.project(_f, axis_view)
 
         fig, ax = pplt.subplots(figsize=(4.5, 1.5))
         ax.format(xlabel=dims_units[axis_view])
