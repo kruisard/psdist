@@ -1,4 +1,5 @@
 """N-dimensional images."""
+import numpy as np
 
 
 def make_slice(n, axis=0, ind=0):
