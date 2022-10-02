@@ -15,12 +15,13 @@ def _emittance(sigma):
     return np.sqrt(la.det(sigma))
 
 
-def apparent_emittances(Sigma):
+def apparent_emittance(Sigma):
     """Return epsx, epsy, epz."""
     _emittances = []
     for i in range(0, Sigma.shape[0], 2):
         _emittances.append(_emittance(Sigma[i:i+2, i:i+2]))
     return _emittances
+
 
 def twiss(Sigma):
     """Return alpha_x, beta_x, alpha_y, beta_y, ..."""
@@ -67,3 +68,24 @@ def norm_mat(*twiss_params):
         j = i * 2
         V[j:j+2, j:j+2] = norm_mat_2x2(*twiss_params[j:j+2])
     return V
+
+
+def lorentz_factors(mass=1.0, kin_energy=1.0):
+    """Return relativistic factors gamma and beta.
+    
+    Parameters
+    ----------
+    mass : float
+        Particle mass divided by c^2 (units of energy).
+    kin_energy : float
+        Particle kinetic energy.
+        
+    Returns
+    -------
+    gamma, beta : float
+        beta = absolute velocity divided by the speed of light
+        gamma = sqrt(1 - (1/beta)**2)
+    """
+    gamma = 1.0 + (kin_energy / mass)
+    beta = np.sqrt(gamma**2 - 1.0) / gamma
+    return gamma, beta

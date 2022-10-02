@@ -1,2 +1,2 @@
-# beamphys
-Analysis/visualization of beam physics data
+# psdist
+Analysis/visualization of phase space distributions
