@@ -1,5 +1,6 @@
 """Particle distributions (point clouds)."""
 import numpy as np
+from . import ap
 from . import utils
 
 
@@ -142,3 +143,33 @@ def histogram(X, bins=10, binrange=None, centers=False):
         return image, [utils.get_bin_centers(e) for e in edges]
     else:
         return image, edges
+    
+    
+
+def norm_xxp_yyp_zzp(X, scale_emittance=False):
+    """Return coordinates normalized by x-x', y-y', z-z' Twiss parameters.
+    
+    Parameters
+    ----------
+    X : ndarray, shape (N, 6)
+        Phase space coordinate array.
+    scale_emittance : bool
+        Whether to divide the coordinates by the square root of the rms emittance.
+    
+    Returns
+    -------
+    Xn : ndarray, shape (N, 6)
+        Normalize phase space coordinate array.
+    """
+    Sigma = np.cov(X.T)
+    Xn = np.zeros(X.shape)
+    alpha_x, alpha_y
+    for i in range(0, 6, 2):
+        sigma = Sigma[i:i+2, i:i+2]
+        alpha, beta = ap.twiss(sigma)
+        Xn[:, i] = X[:, i] / np.sqrt(beta)
+        Xn[:, i + 1] = (np.sqrt(beta) * X[:, i + 1]) + (alpha * X[:, i] / np.sqrt(beta))
+        if scale_emittance:
+            eps = ap.apparent_emittance(sigma)
+            Xn[:, i:i+2] = Xn[:, i:i+2] / np.sqrt(eps)
+    return Xn
