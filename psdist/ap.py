@@ -16,10 +16,12 @@ def _emittance(sigma):
 
 
 def apparent_emittance(Sigma):
-    """Return epsx, epsy, epz."""
+    """Return eps_x, eps_y, eps_z."""
     _emittances = []
     for i in range(0, Sigma.shape[0], 2):
         _emittances.append(_emittance(Sigma[i:i+2, i:i+2]))
+    if len(_emittances) == 1:
+        _emittances = _emittances[0]
     return _emittances
 
 
