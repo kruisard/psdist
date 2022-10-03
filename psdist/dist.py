@@ -163,7 +163,6 @@ def norm_xxp_yyp_zzp(X, scale_emittance=False):
     """
     Sigma = np.cov(X.T)
     Xn = np.zeros(X.shape)
-    alpha_x, alpha_y
     for i in range(0, 6, 2):
         sigma = Sigma[i:i+2, i:i+2]
         alpha, beta = ap.twiss(sigma)
