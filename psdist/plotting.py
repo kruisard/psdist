@@ -214,8 +214,7 @@ def _setup_corner(n, diag, labels, limits=None, **fig_kws):
                 axes[i, j].axis("off")
     for ax, label in zip(axes[-1, :], labels):
         ax.format(xlabel=label)
-    start = 1 if diag else 0
-    for ax, label in zip(axes[start:, 0], labels[start:]):
+    for ax, label in zip(axes[(1 if diag else 0):, 0], labels[1:]):
         ax.format(ylabel=label)
     for i in range(nrows):
         axes[:-1, i].format(xticklabels=[])
