@@ -426,7 +426,7 @@ def matrix_slice(
     axis_slice=None, coords=None, debug=False,
     space=0.1,
     gap=20.0,
-    pad=0.2,
+    pad=0,
     figwidth=8.5,
     fig_kws=None,
     **plot_kws
