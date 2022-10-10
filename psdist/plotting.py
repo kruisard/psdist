@@ -450,6 +450,7 @@ def matrix_slice(
     pad=0,
     figwidth=8.5,
     fig_kws=None,
+    plot_kws_marginal_only=None,
     **plot_kws
 ):
     """2x2 matrix of sliced images.
@@ -457,8 +458,9 @@ def matrix_slice(
     Parameters
     ----------
     axis_view : 2-tuple of int
+        The dimensions to plot.
     axis_slice : 2-tuple of int
-    
+        The dimensions to slice.
     nrows, ncols : int
         Number of rows/columns in the main plot.
     """
@@ -485,10 +487,12 @@ def matrix_slice(
     _coords = [coords[i] for i in axis_view + axis_slice]
     
     # Select slice indices.
+    if type(pad) in [float, int]:
+        pad = len(axis_slice) * [pad]
     ind_slice = []
-    for i, n in zip(axis_slice, [nrows, ncols]):
+    for i, n, _pad in zip(axis_slice, [nrows, ncols], pad):
         s = f.shape[i]
-        _pad = int(pad * s)
+        _pad = int(_pad * s)
         ii = np.linspace(_pad, s - 1 - _pad, n).astype(int)
         ind_slice.append(ii)
         
@@ -532,20 +536,16 @@ def matrix_slice(
 
     # Plotting
     # -------------------------------------------------------------------------
+    if plot_kws_marginal_only is None:
+        plot_kws_marginal_only = dict()
+    for key in plot_kws:
+        plot_kws_marginal_only.setdefault(key, plot_kws[key])
+        
     fig, axes = _setup_matrix_slice(nrows=nrows, ncols=ncols, space=space, 
                                     gap=gap, **fig_kws)
     for i in range(nrows):
         for j in range(ncols):
             ax = axes[nrows - 1 - i, j]
-
-            # Add labels.
-            y = _coords[axis_slice[0]][j]
-            yp = _coords[axis_slice[1]][i]
-            if j == 0:
-                ax.format(ylabel=f'yp={yp:.2f}')
-            if i == 0:
-                axes[0, j].format(title=f'y={y:.2f}')
-
             idx = bi.make_slice(_f.ndim, axis=axis_slice, ind=[(j, j + 1), (i, i + 1)])
             plot_image(
                 bi.project(_f[idx], axis_view),
@@ -560,7 +560,7 @@ def matrix_slice(
             x=_coords[axis_view[0]], 
             y=_coords[axis_view[1]],
             ax=ax,
-            **plot_kws
+            **plot_kws_marginal_only
         )
     for i, ax in enumerate(axes[-1, :-1]):
         plot_image(
@@ -568,16 +568,15 @@ def matrix_slice(
             x=_coords[axis_view[0]], 
             y=_coords[axis_view[1]],
             ax=ax,
-            **plot_kws
+            **plot_kws_marginal_only
         )
     plot_image(
         _fxy,
         x=_coords[axis_view[0]], 
         y=_coords[axis_view[1]],
         ax=axes[-1, -1],
-        **plot_kws
+        **plot_kws_marginal_only
     )
-    # axes[-2, 0].format(xlabel=_dims[axis_view[0]], ylabel=_dims[axis_view[1]])
     return axes
 
 
