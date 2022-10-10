@@ -421,6 +421,27 @@ def corner(
     return axes
 
 
+def _setup_matrix_slice(nrows=9, ncols=9, space=0.1, gap=20.0, **fig_kws):
+    if fig_kws is None:
+        fig_kws = dict()
+    fig_kws.setdefault('figwidth', 8.5)
+    fig_kws.setdefault('share', False)
+    fig_kws.setdefault('xticks', [])
+    fig_kws.setdefault('yticks', [])
+    fig_kws.setdefault('xspineloc', 'neither')
+    fig_kws.setdefault('yspineloc', 'neither')
+    
+    hspace = nrows * [space]
+    wspace = ncols * [space]
+    hspace[-1] = wspace[-1] = gap * space
+    fig, axes = pplt.subplots(
+        ncols=ncols+1, nrows=nrows+1, 
+        hspace=hspace, wspace=wspace,
+        **fig_kws
+    )
+    return fig, axes
+
+
 def matrix_slice(
     f, nrows=9, ncols=9, axis_view=None, 
     axis_slice=None, coords=None, debug=False,
@@ -431,6 +452,16 @@ def matrix_slice(
     fig_kws=None,
     **plot_kws
 ):
+    """2x2 matrix of sliced images.
+    
+    Parameters
+    ----------
+    axis_view : 2-tuple of int
+    axis_slice : 2-tuple of int
+    
+    nrows, ncols : int
+        Number of rows/columns in the main plot.
+    """
     # Setup
     # -------------------------------------------------------------------------
     if f.ndim < 4:
@@ -462,6 +493,7 @@ def matrix_slice(
         ind_slice.append(ii)
         
     if debug:
+        print('Slice indices:')
         for ind in ind_slice:
             print(ind)
             
@@ -500,23 +532,8 @@ def matrix_slice(
 
     # Plotting
     # -------------------------------------------------------------------------
-    if fig_kws is None:
-        fig_kws = dict()
-    fig_kws.setdefault('figwidth', 8.5)
-    fig_kws.setdefault('share', False)
-    fig_kws.setdefault('xticks', [])
-    fig_kws.setdefault('yticks', [])
-    fig_kws.setdefault('xspineloc', 'neither')
-    fig_kws.setdefault('yspineloc', 'neither')
-
-    hspace = nrows * [space]
-    wspace = ncols * [space]
-    hspace[-1] = wspace[-1] = gap * space
-    fig, axes = pplt.subplots(
-        ncols=ncols+1, nrows=nrows+1, 
-        hspace=hspace, wspace=wspace,
-        **fig_kws
-    )
+    fig, axes = _setup_matrix_slice(nrows=nrows, ncols=ncols, space=space, 
+                                    gap=gap, **fig_kws)
     for i in range(nrows):
         for j in range(ncols):
             ax = axes[nrows - 1 - i, j]
