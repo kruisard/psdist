@@ -69,10 +69,10 @@ def copy_into_new_dim(a, shape, axis=-1, method='broadcast', copy=False):
     return None
 
 
-def get_grid_coords(*xi, indexing='ij'):
+def get_grid_coords(*xi):
     """Return array of shape (N, D), where N is the number of points on 
-    the grid and D is the number of dimensions."""
-    return np.vstack([X.ravel() for X in np.meshgrid(*xi, indexing=indexing)]).T
+    the grid and D is the number of dimensions. ij indexing assumed."""
+    return np.vstack([X.ravel() for X in np.meshgrid(*xi, indexing='ij')]).T
 
 
 def get_bin_centers(edges):
@@ -113,3 +113,21 @@ def load_stacked_arrays(filename, axis=0):
     idx = npz_file['stacked_index']
     stacked = npz_file['stacked_array']
     return np.split(stacked, idx, axis=axis)
+
+
+
+def permutations_with_replacement(elements, n):
+    """Return unique permutations of elements.
+    
+    https://stackoverflow.com/questions/6284396/permutations-with-unique-values
+    """
+    def permutations_helper(elements, result_list, d):
+        if d < 0 :
+            yield tuple(result_list)
+        else:
+            for element in elements:
+                result_list[d] = element
+                for g in permutations_helper(elements, result_list, d - 1):
+                    yield g
+                    
+    return permutations_helper(elements, [0] * n, n - 1)
