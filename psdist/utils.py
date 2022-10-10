@@ -131,3 +131,8 @@ def permutations_with_replacement(elements, n):
                     yield g
                     
     return permutations_helper(elements, [0] * n, n - 1)
+
+
+def multiset_permutations(elements):
+    from sympy.utilities.iterables import multiset_permutations
+    return multiset_permutations(elements)
