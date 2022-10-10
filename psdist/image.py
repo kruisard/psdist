@@ -50,15 +50,23 @@ def project(image, axis=0):
     proj : ndarray
         The projection of `image` onto the specified axis.
     """
-    # Sum over the appropriate axes.
+    # Sum over specified axes.
     n = image.ndim
     if type(axis) is int:
         axis = [axis]
     axis = tuple(axis)
     axis_sum = tuple([i for i in range(image.ndim) if i not in axis])
     proj = np.sum(image, axis_sum)
-    # Order the projection axes.
-    destination = np.zeros(proj.ndim, dtype=int)
+    
+    # Order the remaining axes.
+    n = proj.ndim
+    loc = list(range(n))
+    destination = np.zeros(n, dtype=int)
     for i, index in enumerate(np.argsort(axis)):
         destination[index] = i
-    return np.moveaxis(proj, np.arange(proj.ndim), destination)
+    for i in range(n):
+        if loc[i] != destination[i]:
+            j = loc.index(destination[i])
+            proj = np.swapaxes(proj, i, j)
+            loc[i], loc[j] = loc[j], loc[i]
+    return proj
