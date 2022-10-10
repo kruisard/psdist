@@ -421,6 +421,149 @@ def corner(
     return axes
 
 
+def matrix_slice(
+    f, nrows=9, ncols=9, axis_view=None, 
+    axis_slice=None, coords=None, debug=False,
+    space=0.1,
+    gap=20.0,
+    pad=0.2,
+    figwidth=8.5,
+    fig_kws=None,
+    **plot_kws
+):
+    # Setup
+    # -------------------------------------------------------------------------
+    if f.ndim < 4:
+        raise ValueError('f.ndim < 4')
+    if axis_view is None:
+        axis_view = (0, 1)
+    if axis_slice is None:
+        axis_slice = (2, 3)
+    if coords is None:
+        coords = [np.arange(s) for s in f.shape]
+        
+    # Compute 4D projection. 
+    _f = bi.project(f, axis_view + axis_slice)  
+    _f = _f / np.max(_f)
+    # Compute 3D projections.
+    _fx = bi.project(f, axis_view + axis_slice[:1])
+    _fy = bi.project(f, axis_view + axis_slice[1:])
+    # Compute 2D projection.
+    _fxy = bi.project(f, axis_view)
+    # Compute new coordinates.
+    _coords = [coords[i] for i in axis_view + axis_slice]
+    
+    # Select slice indices.
+    ind_slice = []
+    for i, n in zip(axis_slice, [nrows, ncols]):
+        s = f.shape[i]
+        _pad = int(pad * s)
+        ii = np.linspace(_pad, s - 1 - _pad, n).astype(int)
+        ind_slice.append(ii)
+        
+    if debug:
+        for ind in ind_slice:
+            print(ind)
+            
+    # Slice _f. The axes order was already handled by `project`, so the 
+    # first two axes are the view axes and the last two axes are the 
+    # slice axes.
+    axis_view = (0, 1)
+    axis_slice = (2, 3)
+    idx = 4 * [slice(None)]
+    for axis, ind in zip(axis_slice, ind_slice):
+        idx[axis] = ind
+        _f = _f[tuple(idx)]
+        idx[axis] = slice(None)
+
+    # Slice _fx and _fy.
+    _fx = _fx[:, :, ind_slice[0]]
+    _fy = _fy[:, :, ind_slice[1]]
+
+    # Select new coordinates.
+    for i, ind in zip(axis_slice, ind_slice):
+        _coords[i] = _coords[i][ind]
+        
+    # Renormalize all distributions.
+    _f = _f / np.max(_f)
+    _fx = _fx / np.max(_fx)
+    _fy = _fy / np.max(_fy)
+    _fxy = _fxy / np.max(_fxy)
+
+    if debug:
+        print('_f.shape =', _f.shape)
+        print('_fx.shape =', _fx.shape)
+        print('_fy.shape =', _fy.shape)
+        print('_fxy.shape =', _fxy.shape)
+        for i in range(_f.ndim):
+            assert _f.shape[i] == len(_coords[i])
+
+    # Plotting
+    # -------------------------------------------------------------------------
+    if fig_kws is None:
+        fig_kws = dict()
+    fig_kws.setdefault('figwidth', 8.5)
+    fig_kws.setdefault('share', False)
+    fig_kws.setdefault('xticks', [])
+    fig_kws.setdefault('yticks', [])
+    fig_kws.setdefault('xspineloc', 'neither')
+    fig_kws.setdefault('yspineloc', 'neither')
+
+    hspace = nrows * [space]
+    wspace = ncols * [space]
+    hspace[-1] = wspace[-1] = gap * space
+    fig, axes = pplt.subplots(
+        ncols=ncols+1, nrows=nrows+1, 
+        hspace=hspace, wspace=wspace,
+        **fig_kws
+    )
+    for i in range(nrows):
+        for j in range(ncols):
+            ax = axes[nrows - 1 - i, j]
+
+            # Add labels.
+            y = _coords[axis_slice[0]][j]
+            yp = _coords[axis_slice[1]][i]
+            if j == 0:
+                ax.format(ylabel=f'yp={yp:.2f}')
+            if i == 0:
+                axes[0, j].format(title=f'y={y:.2f}')
+
+            idx = bi.make_slice(_f.ndim, axis=axis_slice, ind=[(j, j + 1), (i, i + 1)])
+            plot_image(
+                bi.project(_f[idx], axis_view),
+                x=_coords[axis_view[0]], 
+                y=_coords[axis_view[1]],
+                ax=ax,
+                **plot_kws
+            )
+    for i, ax in enumerate(reversed(axes[:-1, -1])):
+        plot_image(
+            _fy[:, :, i],
+            x=_coords[axis_view[0]], 
+            y=_coords[axis_view[1]],
+            ax=ax,
+            **plot_kws
+        )
+    for i, ax in enumerate(axes[-1, :-1]):
+        plot_image(
+            _fx[:, :, i],
+            x=_coords[axis_view[0]], 
+            y=_coords[axis_view[1]],
+            ax=ax,
+            **plot_kws
+        )
+    plot_image(
+        _fxy,
+        x=_coords[axis_view[0]], 
+        y=_coords[axis_view[1]],
+        ax=axes[-1, -1],
+        **plot_kws
+    )
+    # axes[-2, 0].format(xlabel=_dims[axis_view[0]], ylabel=_dims[axis_view[1]])
+    return axes
+
+
 # Plotly
 # --------------------------------------------------------------------
 def plotly_wire(data=None, x=None, y=None, layout=None, uaxis=None):
