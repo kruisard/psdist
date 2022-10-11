@@ -1,5 +1,9 @@
 """N-dimensional images."""
 import numpy as np
+from tqdm import trange
+from tqdm import tqdm
+
+from . import utils
 
 
 def make_slice(n, axis=0, ind=0):
@@ -72,12 +76,39 @@ def project(image, axis=0):
     return proj
 
 
-def project1d_contour(f, axis=0, level=0.1, fpr=None, normalize=True, return_frac=False):
+def project1d_contour(f, axis=0, level=0.1, shell=None, fpr=None, normalize=True, return_frac=False):
+    """Return 1D projection of the elements of `f` above a threshold in the non-projected dimensions.
+    
+    Parameters
+    ----------
+    f : ndarray
+        An n-dimensional image.
+    axis : int
+        The projection axis.
+    level : float
+        Elements of `f` below this value are masked.
+    shell : float (> level)
+        Elements of `f` above this value are masked. (Defaults to `np.inf`.)
+    fpr : ndarray, shape [f.shape[i] for i in range(f.ndim) if i != axis]
+        Projection of `f` onto the other dimensions. (Helpful if it is expensive to compute).
+    normalize : bool
+        Whether to normalize the projection (so that its sum is unity).
+    return_frac : bool
+        Whether to return the fractional density encapsulated by specified region of `f`.
+    
+    Returns
+    -------
+    p : ndarray, shape f.shape[axis]
+        The 1D projection within the specified boundary.
+    """
     axis_proj = [i for i in range(f.ndim) if i != axis]
     if fpr is None:
         fpr = project(f, axis_proj)
     fpr = fpr / np.max(fpr)
-    idx = np.where(fpr > level)
+    if shell is None:
+        shell = np.inf
+        
+    idx = np.where(np.logical_and(fpr > level, fpr < shell))
     frac = np.sum(fpr[idx]) / np.sum(fpr)
     idx = make_slice(f.ndim, axis_proj, idx)    
     p = np.sum(f[idx], axis=int(axis == 0))
@@ -88,29 +119,52 @@ def project1d_contour(f, axis=0, level=0.1, fpr=None, normalize=True, return_fra
     return p
 
 
-def project2d_contour(f, level=0.1, fpr=None, normalize=True, return_frac=False, axis=(2, 3)):
+def project2d_contour(f, level=0.1, shell=None, fpr=None, normalize=True, return_frac=False, axis=(2, 3)):
+    """Return 2D projection of the elements of `f` above a threshold in the non-projected dimensions.
+    
+    Same as `project1d_contour`.
+    """
     # Compute the 3D mask.
     axis_proj = [i for i in range(f.ndim) if i not in axis]
     if fpr is None:
-        fpr = utils.project(f, axis_proj)
+        fpr = project(f, axis_proj)
     fpr = fpr / np.max(fpr)
-    mask = fpr < level
+    if shell is None:
+        shell = np.inf
+    mask = np.logical_or(fpr < level, fpr > shell)
     frac = np.sum(fpr[~mask]) / np.sum(fpr)
 
     # Copy the 3D mask into the two projected dimensions.
     mask = utils.copy_into_new_dim(mask, (f.shape[axis[0]], f.shape[axis[1]]), axis=-1, copy=True)
-    # Put the dimensions in the correct order.        
+    # Put the dimensions in the correct order. (Have not run this in a while... need
+    # to check that it works.)
     isort = np.argsort(list(axis_proj) + list(axis))
     mask = np.moveaxis(mask, isort, np.arange(5))
+    # Project the masked `f` onto the specified axis.    
+    proj = project(np.ma.masked_array(f, mask=mask), axis=axis)
     
-    # Project the masked 5D array onto the specified axis.    
-    im = utils.project(np.ma.masked_array(f, mask=mask), axis=axis)
+    if normalize:
+        proj = proj / np.sum(proj)
     if return_frac:
-        return im, frac
-    return im
+        return proj, frac
+    return proj
 
 
 def get_radii(coords, Sigma):
+    """Return "radii" (x^T Sigma^-1^T x) from grid coordinates and covariance matrix.
+    
+    Parameters
+    ----------
+    coords : list[ndarray], length n
+        Coordinate array for each dimension of the regular grid.
+    Sigma : ndarray, shape (n, n)
+        Covariance matrix of some distribution on the grid.
+    
+    Returns
+    -------
+    R : ndarray
+        "Radius" x^T Sigma^-1^T x at each point in grid.
+    """
     COORDS = np.meshgrid(*coords, indexing='ij')
     shape = tuple([len(c) for c in coords])
     R = np.zeros(shape)
@@ -130,3 +184,50 @@ def radial_density(f, R, radii, dr=None):
         # mean density within this shell...
         fr.append(np.mean(f_masked))
     return np.array(fr)
+
+
+def cov(f, coords, disp=False):
+    """Compute the NxN covariance matrix.
+    
+    To-do: rewrite. The second-order moments can be computed from the
+    N(N-1)/2 two-dimensional projections of the image. We do not
+    need to loop over every pixel, which takes forever.
+    
+    Parameters
+    ----------
+    f : ndarray
+        The distribution function (weights).
+    coords : list[ndarray]
+        List of coordinates along each axis of `H`. Can also
+        provide meshgrid coordinates.
+        
+    Returns
+    -------
+    Sigma : ndarray, shape (n, n)
+    means : ndarray, shape (n,)
+    """
+    if disp:
+        print(f'Forming {f.shape} meshgrid...')
+    if coords[0].ndim == 1:
+        COORDS = np.meshgrid(*coords, indexing='ij')
+    n = f.ndim
+    f_sum = np.sum(f)
+    if f_sum == 0:
+        return np.zeros((n, n)), np.zeros((n,))
+    if disp:
+        print('Averaging...')
+    means = np.array([np.average(C, weights=f) for C in COORDS])
+    Sigma = np.zeros((n, n))
+    _range = trange if disp else range
+    for i in _range(Sigma.shape[0]):
+        for j in _range(i + 1):
+            X = COORDS[i] - means[i]
+            Y = COORDS[j] - means[j]
+            EX = np.sum(X * f) / f_sum
+            EY = np.sum(Y * f) / f_sum
+            EXY = np.sum(X * Y * f) / f_sum
+            Sigma[i, j] = EXY - EX * EY
+    Sigma = utils.symmetrize(Sigma)
+    if disp:
+        print('Done.')
+    return Sigma, means
