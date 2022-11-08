@@ -1,15 +1,13 @@
+"""Plotting routines for phase space distributions/images."""
 from ipywidgets import interactive
 from ipywidgets import widgets
-import matplotlib as mpl
 from matplotlib import pyplot as plt
-from matplotlib.lines import Line2D
-from matplotlib.patches import Ellipse
 import numpy as np
 import proplot as pplt
 from plotly import graph_objects as go
 from scipy import optimize as opt
 
-from . import image as bi
+from . import image as psi
 from . import utils
 
 
@@ -95,21 +93,21 @@ def auto_limits(X, sigma=None, **kws):
 
 # Images
 # ------------------------------------------------------------------------------
-def prep_image_for_log(image, method="floor"):
+def prep_image_for_log(f, method="floor"):
     """Avoid zeros in image to use logarithmic colormaps.
     
     `method=floor` adds the images minimum positive value to the image.
     `method=mask` masks the zero elements. 
     """
-    if np.all(image > 0):
-        return image
+    if np.all(f > 0):
+        return f
     if method == 'floor':
         floor = 1e-12
-        if np.max(image) > 0:
-            floor = np.min(image[image > 0])
-        return image + floor
+        if np.max(f) > 0:
+            floor = np.min(f[f > 0])
+        return f + floor
     elif method == 'mask':
-        return np.ma.masked_less_equal(image, 0)
+        return np.ma.masked_less_equal(f, 0)
 
 
 def plot1d(x, y, ax=None, flipxy=False, kind="step", **kws):
@@ -128,7 +126,7 @@ def plot1d(x, y, ax=None, flipxy=False, kind="step", **kws):
 
 
 def plot_profile(
-    image,
+    f,
     xcoords=None,
     ycoords=None,
     ax=None,
@@ -142,12 +140,13 @@ def plot_profile(
     
     Parameters
     ----------
+    f : 
     
     """
     if xcoords is None:
-        xcoords = np.arange(image.shape[1])
+        xcoords = np.arange(f.shape[1])
     if ycoords is None:
-        ycoords = np.arange(image.shape[0])
+        ycoords = np.arange(f.shape[0])
     plot_kws.setdefault("lw", 0.75)
     plot_kws.setdefault("color", "white")
 
@@ -157,7 +156,7 @@ def plot_profile(
             profile = profile / pmax
         return profile
 
-    px, py = [_normalize(np.sum(image, axis=i)) for i in (1, 0)]
+    px, py = [_normalize(np.sum(f, axis=i)) for i in (1, 0)]
     yy = ycoords[0] + scale * np.abs(ycoords[-1] - ycoords[0]) * px
     xx = xcoords[0] + scale * np.abs(xcoords[-1] - xcoords[0]) * py
     for i, (x, y) in enumerate(zip([xcoords, ycoords], [yy, xx])):
@@ -170,7 +169,7 @@ def plot_profile(
 
 
 def plot_image(
-    image,
+    f,
     x=None,
     y=None,
     ax=None,
@@ -193,19 +192,19 @@ def plot_image(
     plot_kws.setdefault("rasterized", True)
     log = "norm" in plot_kws and plot_kws["norm"] == "log"
     if fill_value is not None:
-        image = np.ma.filled(image, fill_value=fill_value)
+        f = np.ma.filled(f, fill_value=fill_value)
     if thresh is not None:
         if thresh_type == "frac":
-            thresh = thresh * np.max(image)
-        image[image < max(1e-12, thresh)] = 0
+            thresh = thresh * np.max(f)
+        f[f < max(1e-12, thresh)] = 0
     if log:
         if "colorbar" in plot_kws and plot_kws["colorbar"]:
             if "colorbar_kw" not in plot_kws:
                 plot_kws["colorbar_kw"] = dict()
             plot_kws["colorbar_kw"]["formatter"] = "log"
-        image = prep_image_for_log(image, handle_log)
+        f = prep_image_for_log(f, handle_log)
     if mask_zero:
-        image = np.ma.masked_less_equal(image, 0)
+        f = np.ma.masked_less_equal(f, 0)
     if contour_kws is None:
         contour_kws = dict()
     contour_kws.setdefault("color", "white")
@@ -214,19 +213,19 @@ def plot_image(
     if prof_kws is None:
         prof_kws = dict()
     if x is None:
-        x = np.arange(image.shape[0])
+        x = np.arange(f.shape[0])
     if y is None:
-        y = np.arange(image.shape[1])
+        y = np.arange(f.shape[1])
     if x.ndim == 2:
         x = x.T
     if y.ndim == 2:
         y = y.T
-    mesh = ax.pcolormesh(x, y, image.T, **plot_kws)
+    mesh = ax.pcolormesh(x, y, f.T, **plot_kws)
     if contour:
-        ax.contour(x, y, image.T, **contour_kws)
+        ax.contour(x, y, f.T, **contour_kws)
     if profx or profy:
         plot_profile(
-            image, xcoords=x, ycoords=y, ax=ax, profx=profx, profy=profy, **prof_kws
+            f, xcoords=x, ycoords=y, ax=ax, profx=profx, profy=profy, **prof_kws
         )
     if return_mesh:
         return ax, mesh
@@ -293,7 +292,7 @@ def corner(
     return_mesh=False,
     **plot_kws,
 ):
-    """Plot 1D/2D projections in a grid of subplots.
+    """Plot 1D/2D projections in a corner plot.
 
     Parameters
     ----------
@@ -443,7 +442,7 @@ def corner(
                     profx = i == axes.shape[0] - 1
                 else:
                     profx = profy = prof
-                image = bi.project(data, (j, ii + 1))
+                image = psi.project(data, (j, ii + 1))
                 image = image / np.max(image)
                 ax, mesh = plot_image(
                     image,
@@ -459,7 +458,7 @@ def corner(
         # Univariate plots
         if diag:
             for i in range(n):
-                h = bi.project(data, i)
+                h = psi.project(data, i)
                 plot1d(coords[i], h / np.max(h), ax=axes[i, i], **diag_kws)
     # Modify diagonal y axis limits.
     if diag:
@@ -494,26 +493,75 @@ def _setup_matrix_slice(nrows=9, ncols=9, space=0.1, gap=20.0, **fig_kws):
 
 
 def matrix_slice(
-    f, nrows=9, ncols=9, axis_view=None, 
-    axis_slice=None, coords=None, debug=False,
+    f, 
+    axis_view=None, 
+    axis_slice=None, 
+    nrows=9, 
+    ncols=9, 
+    coords=None, 
     space=0.1,
     gap=20.0,
     pad=0,
-    figwidth=8.5,
     fig_kws=None,
     plot_kws_marginal_only=None,
+    debug=False,
     **plot_kws
 ):
-    """2x2 matrix of sliced images.
+    """Matrix of 2D images as two other dimensions are sliced.
+    
+    In the following, assume `axis_slice`=(0, 1) and `axis_view=(2, 3)`:
+    
+    First, `f` is sliced using `ncols` evenly spaced indices along axis 0 and
+    `nrows` evenly spaced indices along axis 1. The resulting array has shape
+    (`ncols`, `nrows`, `f.shape[2]`, `f.shape[3]`). For i in range(`ncols`) and
+    j in range(`nrows`), we plot the 2D image `f[i, j, :, :]`. This is done in 
+    a matrix of subplots in the upper-left panel. 
+    
+    Second, 2D slices of the 3D array obtained by summing `f` along axis 0 are 
+    plotted in the upper-right panel.
+    
+    Third, 2D slices of the 3D array obtained by summing `f` along axis 1 are 
+    plotted in the lower-left panel.
+    
+    Fourth, `f` is projected onto axis (2, 3) and plotted in the lower-right p
+    panel.
+    
+    ...that was probably not a great explanation.
     
     Parameters
     ----------
+    f : ndarray
+        A four-dimensional image.
     axis_view : 2-tuple of int
         The dimensions to plot.
     axis_slice : 2-tuple of int
         The dimensions to slice.
     nrows, ncols : int
-        Number of rows/columns in the main plot.
+        The number of slices along each axis in `axis_slice`.
+    coords : list[ndarray]
+        Coordinates along each axis of the grid (if `data` is an image).
+    space : float
+        Spacing between subplots.
+    gap : float
+        Gap between major panels.
+    pad : int, float, list
+        This determines the start/stop indices along the sliced dimensions. If
+        0, space the indices along axis `i` uniformly between 0 and `f.shape[i]`. 
+        Otherwise, add a padding equal to `int(pad[i] * f.shape[i])`. So, if
+        the shape=10 and pad=0.1, we would start from 1 and end at 9.
+    fig_kws : dict
+        Key word arguments for `pplt.subplots`.
+    plot_kws_marginal_only : dict
+        Key word arguments for the lower-left and upper-right panels, which 
+        plot the 3D marginal distributions.
+    debug : bool
+        Whether to print debugging messages.
+    **plot_kws
+        Key word arguments for `plot_image`.
+        
+    Returns
+    -------
+    axes
     """
     # Setup
     # -------------------------------------------------------------------------
@@ -527,13 +575,13 @@ def matrix_slice(
         coords = [np.arange(s) for s in f.shape]
         
     # Compute 4D projection. 
-    _f = bi.project(f, axis_view + axis_slice)  
+    _f = psi.project(f, axis_view + axis_slice)  
     _f = _f / np.max(_f)
     # Compute 3D projections.
-    _fx = bi.project(f, axis_view + axis_slice[:1])
-    _fy = bi.project(f, axis_view + axis_slice[1:])
+    _fx = psi.project(f, axis_view + axis_slice[:1])
+    _fy = psi.project(f, axis_view + axis_slice[1:])
     # Compute 2D projection.
-    _fxy = bi.project(f, axis_view)
+    _fxy = psi.project(f, axis_view)
     # Compute new coordinates.
     _coords = [coords[i] for i in axis_view + axis_slice]
     
@@ -591,15 +639,19 @@ def matrix_slice(
         plot_kws_marginal_only = dict()
     for key in plot_kws:
         plot_kws_marginal_only.setdefault(key, plot_kws[key])
+    if fig_kws is None:
+        fig_kws = dict()
         
-    fig, axes = _setup_matrix_slice(nrows=nrows, ncols=ncols, space=space, 
-                                    gap=gap, **fig_kws)
+    fig, axes = _setup_matrix_slice(
+        nrows=nrows, ncols=ncols, space=space, gap=gap, **fig_kws
+    )
+    
     for i in range(nrows):
         for j in range(ncols):
             ax = axes[nrows - 1 - i, j]
-            idx = bi.make_slice(_f.ndim, axis=axis_slice, ind=[(j, j + 1), (i, i + 1)])
+            idx = psi.make_slice(_f.ndim, axis=axis_slice, ind=[(j, j + 1), (i, i + 1)])
             plot_image(
-                bi.project(_f[idx], axis_view),
+                psi.project(_f[idx], axis_view),
                 x=_coords[axis_view[0]], 
                 y=_coords[axis_view[1]],
                 ax=ax,
@@ -631,44 +683,6 @@ def matrix_slice(
     return axes
 
 
-# Plotly
-# --------------------------------------------------------------------
-def plotly_wire(data=None, x=None, y=None, layout=None, uaxis=None):
-    Z = data
-    if x is None:
-        x = np.arange(Z.shape[0])
-    if y is None:
-        y = np.arange(Z.shape[1])
-    X, Y = np.meshgrid(x, y, indexing='ij')    
-    lines = []
-    line_marker = dict(color='black', width=3)
-    for x, y, z in zip(X, Y, Z):
-        lines.append(go.Scatter3d(x=x, y=y, z=z, mode='lines', line=line_marker))
-
-    if uaxis is None:
-        uaxis= dict(
-            gridcolor='rgb(255, 255, 255)',
-            zerolinecolor='rgb(255, 255, 255)',
-            showbackground=True,
-            backgroundcolor='rgb(230, 230,230)',
-        )
-    if layout is None:
-        layout = go.Layout(
-            width=500,
-            height=500,
-            showlegend=False,
-        )
-    fig = go.Figure(data=lines, layout=layout)
-    fig.update_layout(
-        scene=dict(
-            xaxis=uaxis, 
-            yaxis=uaxis,
-            zaxis=uaxis,
-        ),
-    )
-    return fig
-
-
 # Interactive
 # ------------------------------------------------------------------------------
 def interactive_proj2d(
@@ -698,15 +712,14 @@ def interactive_proj2d(
     default_ind : (i, j)
         Default x and y index to plot.
     slice_type : {'int', 'range'}
-        Whether to slice one index along the axis or a range of indices.
-    dims : list[str], shape (n,)
-        Dimension names.
-    units : list[str], shape (n,)
-        Dimension units.
+        Whether to slice one index along the axis or a range of indices. 
+        (The latest version of `ipywidgets` lets you drag range sliders.)
+    dims, units : list[str], shape (n,)
+        Dimension names and units.
     prof_kws : dict
         Key word arguments for 1D profile plots.
     cmaps : list
-        Color map options.
+        Color map options for dropdown menu.
     handle_log : {'floor', 'mask'}
         See `plot_image`.
     
@@ -1005,8 +1018,8 @@ def interactive_proj2d(
             if type(ind[k]) is int:
                 ind[k] = (ind[k], ind[k] + 1)
         ind = [ind[k] for k in axis_slice]
-        H = f[bi.make_slice(f.ndim, axis_slice, ind)]
-        H = bi.project(H, axis_view)
+        H = f[psi.make_slice(f.ndim, axis_slice, ind)]
+        H = psi.project(H, axis_view)
         H = np.ma.masked_less_equal(H, 10.0 ** thresh)
         plot_kws.update(
             {
@@ -1054,10 +1067,7 @@ def interactive_proj1d(
     kind="bar",
     **plot_kws,
 ):
-    """Interactive plot of 1D projection of distribution `f`.
-    
-    The distribution is projected onto the specified axis. Sliders provide the
-    option to slice the distribution before projecting.
+    """1D projection of image `f` with interactive slicing.
     
     Parameters
     ----------
@@ -1068,11 +1078,10 @@ def interactive_proj1d(
     default_ind : int
         Default index to plot.
     slice_type : {'int', 'range'}
-        Whether to slice one index along the axis or a range of indices.
-    dims : list[str], shape (n,)
-        Dimension names.
-    units : list[str], shape (n,)
-        Dimension units.
+        Whether to slice one index along the axis or a range of indices. 
+        (The latest version of `ipywidgets` lets you drag range sliders.)
+    dims, units : list[str], shape (n,)
+        Dimension names and units.
     kind : {'bar', 'line'}
         The kind of plot to draw.
     **plot_kws
@@ -1237,8 +1246,8 @@ def interactive_proj1d(
             if type(ind[k]) is int:
                 ind[k] = (ind[k], ind[k] + 1)
         ind = [ind[k] for k in axis_slice]
-        _f = f[bi.make_slice(f.ndim, axis_slice, ind)]
-        p = bi.project(_f, axis_view)
+        _f = f[psi.make_slice(f.ndim, axis_slice, ind)]
+        p = psi.project(_f, axis_view)
 
         fig, ax = pplt.subplots(figsize=(4.5, 1.5))
         ax.format(xlabel=dims_units[axis_view])
@@ -1262,21 +1271,6 @@ def interactive_proj1d(
     return gui
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def interactive_proj2d_discrete(
     X,
     limits=None,
@@ -1287,8 +1281,11 @@ def interactive_proj2d_discrete(
     units=None,
     **plot_kws,
 ):
-    """Right now, it only works for 6D data. Need to find a way to 
-    make it work easily for ND data."""
+    """This mirrors `interactive_proj2d` for point clouds.
+    
+    This is useful because we do not have to compute/store a 6D histogram. (It
+    currently works for 6D data, not ND data.)
+    """
     n = X.shape[1]
     if limits is None:
         limits = [(np.min(X[:, i]), np.max(X[:, i])) for i in range(n)]
