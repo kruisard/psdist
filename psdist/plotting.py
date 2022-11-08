@@ -4,7 +4,6 @@ from ipywidgets import widgets
 from matplotlib import pyplot as plt
 import numpy as np
 import proplot as pplt
-from plotly import graph_objects as go
 from scipy import optimize as opt
 
 from . import image as psi

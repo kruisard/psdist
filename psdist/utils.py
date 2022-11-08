@@ -2,43 +2,12 @@ import numpy as np
 import pickle
 
 
-def save_pickle(filename, item):
-    """Convenience function to save pickled file."""
-    with open(filename, 'wb') as file:
-        pickle.dump(item, file)
-        
-        
-def load_pickle(filename):
-    """Convenience function to load pickled file."""
-    with open(filename, 'rb') as file:
-        return pickle.load(file)
-
-
 def cov2corr(cov_mat):
     """Compute correlation matrix from covariance matrix."""
     D = np.sqrt(np.diag(cov_mat.diagonal()))
     Dinv = np.linalg.inv(D)
     corr_mat = np.linalg.multi_dot([Dinv, cov_mat, Dinv])
     return corr_mat
-
-
-def symmetrize(a):
-    """Return symmetrized version of upper or lower triangular matrix `a`."""
-    return a + a.T - np.diag(a.diagonal())
-
-
-def is_sorted(a):
-    return np.all(a[:-1] <= a[1:])
-
-
-def apply(M, X):
-    """Apply M to each row of X."""
-    return np.apply_along_axis(lambda v: np.matmul(M, v), 1, X)
-
-
-def max_indices(a):
-    """Return indices of maximum element in array."""
-    return np.unravel_index(np.argmax(a), a.shape)    
 
 
 def copy_into_new_dim(a, shape, axis=-1, method='broadcast', copy=False):
@@ -70,7 +39,10 @@ def copy_into_new_dim(a, shape, axis=-1, method='broadcast', copy=False):
 
 
 # The following three functions are from Tony Yu's blog 
-# (https://tonysyu.github.io/ragged-arrays.html#.YKVwQy9h3OR).
+# (https://tonysyu.github.io/ragged-arrays.html#.YKVwQy9h3OR). 
+# They allow saving/loading ragged arrays in .npz format. This is helpful when 
+# tracking a bunch that is losing/gaining particles; e.g., during turn-by-turn
+# injection.
 def stack_ragged(arrays, axis=0):
     """Stacks list of arrays along first axis.
     
@@ -96,25 +68,3 @@ def load_stacked_arrays(filename, axis=0):
     idx = npz_file['stacked_index']
     stacked = npz_file['stacked_array']
     return np.split(stacked, idx, axis=axis)
-
-
-def permutations_with_replacement(elements, n):
-    """Return unique permutations of elements.
-    
-    https://stackoverflow.com/questions/6284396/permutations-with-unique-values
-    """
-    def permutations_helper(elements, result_list, d):
-        if d < 0 :
-            yield tuple(result_list)
-        else:
-            for element in elements:
-                result_list[d] = element
-                for g in permutations_helper(elements, result_list, d - 1):
-                    yield g
-                    
-    return permutations_helper(elements, [0] * n, n - 1)
-
-
-def multiset_permutations(elements):
-    from sympy.utilities.iterables import multiset_permutations
-    return multiset_permutations(elements)

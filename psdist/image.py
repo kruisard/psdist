@@ -17,6 +17,11 @@ def get_bin_centers(edges):
     return 0.5 * (edges[:-1] + edges[1:])
 
 
+def max_indices(f):
+    """Return the indices of the maximum element of `f`."""
+    return np.unravel_index(np.argmax(f), f.shape) 
+
+
 def make_slice(n, axis=0, ind=0):
     """Return a slice index array.
     

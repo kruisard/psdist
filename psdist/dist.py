@@ -4,6 +4,24 @@ from . import ap
 from . import utils
 
 
+def apply(M, X):
+    """Apply a linear transformation.
+    
+    Parameters
+    ----------
+    M : ndarray, shape (d, d)
+        A matrix.
+    X : ndarray, shape (n, d)
+        Coordinate array for n points in d-dimensional space.
+        
+    Returns
+    -------
+    ndarray, shape (n, d)
+        The transformed distribution.
+    """
+    return np.apply_along_axis(lambda v: np.matmul(M, v), 1, X)
+
+
 def radial_extent(X, fraction=1.0):
     """Return radius of sphere containing fraction of points.
     
