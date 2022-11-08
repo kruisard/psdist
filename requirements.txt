@@ -1,0 +1,6 @@
+ipywidgets
+matplotlib
+numpy
+proplot
+scipy
+tqdm
