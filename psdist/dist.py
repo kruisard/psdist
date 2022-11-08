@@ -1,4 +1,4 @@
-"""Particle distributions (point clouds)."""
+"""Functions for phase space distributions (point clouds)."""
 import numpy as np
 from . import ap
 from . import utils
@@ -6,11 +6,20 @@ from . import utils
 
 def radial_extent(X, fraction=1.0):
     """Return radius of sphere containing fraction of points.
-
-    X : n-d array
-        Coordinate array.
+    
+    (This has not been tested.)
+    
+    Parameters
+    ----------
+    X : ndarray, shape (n, d)
+        Coordinate array for n points in d-dimensional space.
     fraction : float
         Fraction of points in sphere.
+        
+    Returns
+    -------
+    radius : float
+        Radius of sphere containing `fraction` of points.
     """
     radii = np.linalg.norm(X, axis=0)
     radii = np.sort(radii)
@@ -26,12 +35,12 @@ def radial_extent(X, fraction=1.0):
 
 
 def slice_box(X, axis=None, center=None, width=None):
-    """Return points within box.
+    """Return points within a box.
     
     Parameters
     ----------
     X : ndarray, shape (n, d)
-        Points in d-dimensional space.
+        Coordinate array for n points in d-dimensional space.
     axis : tuple
         Slice axes. For example, (0, 1) will slice along the first and
         second axes of the array.
@@ -43,7 +52,7 @@ def slice_box(X, axis=None, center=None, width=None):
     Returns
     -------
     ndarray, shape (m, d)
-        Points within the box.
+        The points within the box.
     """
     d = X.shape[1]
     if axis is None:
@@ -68,12 +77,12 @@ def slice_box(X, axis=None, center=None, width=None):
 
 
 def slice_sphere(X, axis=0, r=None):
-    """Return points within sphere.
+    """Return points within a sphere.
     
     Parameters
     ----------
     X : ndarray, shape (n, d)
-        Points in d-dimensional space.
+        Coordinate array for n points in d-dimensional space.
     axis : tuple
         Slice axes. For example, (0, 1) will slice along the first and
         second axes of the array.
@@ -83,7 +92,7 @@ def slice_sphere(X, axis=0, r=None):
     Returns
     -------
     ndarray, shape (m, d)
-        Points within boundary.
+        The points within the sphere.
     """
     n = X.shape[1]
     if axis is None:
@@ -96,12 +105,12 @@ def slice_sphere(X, axis=0, r=None):
 
 
 def slice_ellipsoid(X, axis=0, limits=None):
-    """Return points within ellipsoid.
+    """Return points within an ellipsoid.
     
     Parameters
     ----------
     X : ndarray, shape (n, d)
-        Points in d-dimensional space.
+        Coordinate array for n points in d-dimensional space.
     axis : tuple
         Slice axes. For example, (0, 1) will slice along the first and
         second axes of the array.
@@ -111,7 +120,7 @@ def slice_ellipsoid(X, axis=0, limits=None):
     Returns
     -------
     ndarray, shape (m, d)
-        Points within boundary.
+        Points within the ellipsoid.
     """
     n = X.shape[1]
     if axis is None:
@@ -145,7 +154,6 @@ def histogram(X, bins=10, binrange=None, centers=False):
         return image, edges
     
     
-
 def norm_xxp_yyp_zzp(X, scale_emittance=False):
     """Return coordinates normalized by x-x', y-y', z-z' Twiss parameters.
     
@@ -159,7 +167,7 @@ def norm_xxp_yyp_zzp(X, scale_emittance=False):
     Returns
     -------
     Xn : ndarray, shape (N, 6)
-        Normalize phase space coordinate array.
+        Normalized phase space coordinate array.
     """
     Sigma = np.cov(X.T)
     Xn = np.zeros(X.shape)

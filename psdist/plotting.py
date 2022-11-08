@@ -8,14 +8,13 @@ import numpy as np
 import proplot as pplt
 from plotly import graph_objects as go
 from scipy import optimize as opt
-import seaborn as sns
-import skimage
 
 from . import image as bi
 from . import utils
 
 
 def linear_fit(x, y):
+    """Return (yfit, slope, intercept) from linear fit."""
     def fit(x, slope, intercept):
         return slope * x + intercept
     
@@ -26,6 +25,22 @@ def linear_fit(x, y):
 
 
 def process_limits(mins, maxs, pad=0.0, zero_center=False):
+    """Make all position coordinates have the same limits (same for momentum coordinates).
+    
+    Parameters
+    ----------
+    mins, maxs : list
+        The minimum and maximum coordinates for each dimension (x, x', y, y', z, z').
+    pad : float
+        Fractional padding to apply to the limits.
+    zero_center : bool
+        Whether to center the limits on zero.
+    
+    Returns
+    -------
+    mins, maxs : list
+        The new limits.
+    """
     # Same limits for x/y and x'/y'
     widths = np.abs(mins - maxs)
     for (i, j) in [[0, 2], [1, 3]]:
@@ -47,8 +62,24 @@ def process_limits(mins, maxs, pad=0.0, zero_center=False):
     return mins, maxs
 
 
-def auto_limits(X, pad=0.0, zero_center=False, sigma=None):
-    """Determine axis limits from coordinate array."""
+def auto_limits(X, sigma=None, **kws):
+    """Determine axis limits from coordinate array.
+    
+    Parameters
+    ----------
+    X : ndarray, shape (n, d)
+        Coordinate array for n points in d-dimensional space.
+    sigma : float
+        If a number is provided, it is used to set the limits relative to 
+        the standard deviation of the distribution.
+    **kws
+        Key word arguments for `process_limits`.
+        
+    Returns
+    -------
+    mins, maxs : list
+        The new limits.
+    """
     if sigma is None:
         mins = np.min(X, axis=0)
         maxs = np.max(X, axis=0)
@@ -58,26 +89,31 @@ def auto_limits(X, pad=0.0, zero_center=False, sigma=None):
         widths = 2.0 * sigma * stds
         mins = means - 0.5 * widths
         maxs = means + 0.5 * widths
-    mins, maxs = process_limits(mins, maxs, pad, zero_center)
+    mins, maxs = process_limits(mins, maxs, **kws)
     return [(lo, hi) for lo, hi in zip(mins, maxs)]
 
 
 # Images
 # ------------------------------------------------------------------------------
 def prep_image_for_log(image, method="floor"):
-    """Avoid zeros in image."""
+    """Avoid zeros in image to use logarithmic colormaps.
+    
+    `method=floor` adds the images minimum positive value to the image.
+    `method=mask` masks the zero elements. 
+    """
     if np.all(image > 0):
         return image
-    if method == "floor":
+    if method == 'floor':
         floor = 1e-12
         if np.max(image) > 0:
             floor = np.min(image[image > 0])
         return image + floor
-    elif method == "mask":
+    elif method == 'mask':
         return np.ma.masked_less_equal(image, 0)
 
 
 def plot1d(x, y, ax=None, flipxy=False, kind="step", **kws):
+    """Convenience function for one-dimensional line/step/bar plots."""
     funcs = {
         "line": ax.plot,
         "bar": ax.bar,
@@ -102,7 +138,12 @@ def plot_profile(
     scale=0.12,
     **plot_kws,
 ):
-    """Plot 1D projection of image along axis."""
+    """Overlay a 1D projection on top of a 2D image.
+    
+    Parameters
+    ----------
+    
+    """
     if xcoords is None:
         xcoords = np.arange(image.shape[1])
     if ycoords is None:

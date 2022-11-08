@@ -1,7 +1,8 @@
-"""N-dimensional images."""
+"""Functions for phase space images."""
 import numpy as np
 from tqdm import trange
 from tqdm import tqdm
+from scipy import ndimage
 
 from . import utils
 
@@ -9,6 +10,8 @@ from . import utils
 def make_slice(n, axis=0, ind=0):
     """Return a slice index array.
     
+    Parameters
+    ----------
     n : int
         The length of the slice index. 
     axis : list[int]
@@ -37,12 +40,12 @@ def make_slice(n, axis=0, ind=0):
     return tuple(idx)
 
 
-def project(image, axis=0):
-    """Project image onto one or more axes.
+def project(f, axis=0):
+    """Project along one or more axes.
     
     Parameters
     ----------
-    image : ndarray
+    f : ndarray
         An n-dimensional image.
     axis : list[int]
         The axes onto which the image is projected, i.e., the
@@ -55,12 +58,12 @@ def project(image, axis=0):
         The projection of `image` onto the specified axis.
     """
     # Sum over specified axes.
-    n = image.ndim
+    n = f.ndim
     if type(axis) is int:
         axis = [axis]
     axis = tuple(axis)
-    axis_sum = tuple([i for i in range(image.ndim) if i not in axis])
-    proj = np.sum(image, axis_sum)
+    axis_sum = tuple([i for i in range(f.ndim) if i not in axis])
+    proj = np.sum(f, axis_sum)
     
     # Order the remaining axes.
     n = proj.ndim
@@ -119,10 +122,10 @@ def project1d_contour(f, axis=0, level=0.1, shell=None, fpr=None, normalize=True
     return p
 
 
-def project2d_contour(f, level=0.1, shell=None, fpr=None, normalize=True, return_frac=False, axis=(2, 3)):
+def project2d_contour(f, axis=(0, 1), level=0.1, shell=None, fpr=None, normalize=True, return_frac=False):
     """Return 2D projection of the elements of `f` above a threshold in the non-projected dimensions.
     
-    Same as `project1d_contour`.
+    The parameters are defined in `project1d_contour`.
     """
     # Compute the 3D mask.
     axis_proj = [i for i in range(f.ndim) if i not in axis]
@@ -176,6 +179,24 @@ def get_radii(coords, Sigma):
 
 
 def radial_density(f, R, radii, dr=None):
+    """Return average density within ellipsoidal shells.
+    
+    Parameters
+    ----------
+    f : ndarray
+        An n-dimensional image.
+    R : ndarray, same shape as `f`.
+        Gives the "radius" at each pixel in f.
+    radii : ndarray, shape (k,)
+        Radii at which to evaluate the density.
+    dr : float
+        The shell width.
+        
+    Returns
+    -------
+    fr : ndarray, shape (k,)
+        The average density within each ellipsoidal shell.
+    """
     if dr is None:
         dr = 0.5 * np.max(R) / (len(R) - 1)
     fr = []
@@ -191,12 +212,12 @@ def cov(f, coords, disp=False):
     
     To-do: rewrite. The second-order moments can be computed from the
     N(N-1)/2 two-dimensional projections of the image. We do not
-    need to loop over every pixel, which takes forever.
+    need to loop over every pixel.
     
     Parameters
     ----------
     f : ndarray
-        The distribution function (weights).
+        An n-dimensional image.
     coords : list[ndarray]
         List of coordinates along each axis of `H`. Can also
         provide meshgrid coordinates.
@@ -204,7 +225,9 @@ def cov(f, coords, disp=False):
     Returns
     -------
     Sigma : ndarray, shape (n, n)
+        The covariance matrix.
     means : ndarray, shape (n,)
+        The centroid coordinates.
     """
     if disp:
         print(f'Forming {f.shape} meshgrid...')
