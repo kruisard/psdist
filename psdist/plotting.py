@@ -183,9 +183,10 @@ def plot_image(
     mesh = ax.pcolormesh(x, y, image.T, **plot_kws)
     if contour:
         ax.contour(x, y, image.T, **contour_kws)
-    plot_profile(
-        image, xcoords=x, ycoords=y, ax=ax, profx=profx, profy=profy, **prof_kws
-    )
+    if profx or profy:
+        plot_profile(
+            image, xcoords=x, ycoords=y, ax=ax, profx=profx, profy=profy, **prof_kws
+        )
     if return_mesh:
         return ax, mesh
     else:
@@ -248,6 +249,7 @@ def corner(
     prof=False,
     prof_kws=None,
     return_fig=False,
+    return_mesh=False,
     **plot_kws,
 ):
     """Plot 1D/2D projections in a grid of subplots.
@@ -292,6 +294,9 @@ def corner(
         Key word arguments passed to `plot_profiles`.
     return_fig : bool
         Whether to return `fig` in addition to `axes`.
+    return_mesh : bool
+        Whether to also return a mesh from one of the pcolor plots. This is
+        useful if you want to put a colorbar on the figure later.
     **plot_kws
         Key word arguments passed to 2D plotting function.
     
@@ -397,14 +402,17 @@ def corner(
                     profx = i == axes.shape[0] - 1
                 else:
                     profx = profy = prof
-                plot_image(
-                    bi.project(data, (j, ii + 1)),
+                image = bi.project(data, (j, ii + 1))
+                image = image / np.max(image)
+                ax, mesh = plot_image(
+                    image,
                     x=coords[j],
                     y=coords[ii + 1],
                     ax=ax,
                     profx=profx,
                     profy=profy,
                     prof_kws=prof_kws,
+                    return_mesh=True,
                     **plot_kws,
                 )
         # Univariate plots
@@ -417,6 +425,8 @@ def corner(
         for i in range(n):
             axes[i, i].set_ylim(0, 1.0 / diag_height_frac)
     if return_fig:
+        if return_mesh:
+            return fig, axes, mesh
         return fig, axes
     return axes
 
