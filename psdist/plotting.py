@@ -131,7 +131,7 @@ def plot_profile(
     ax=None,
     profx=True,
     profy=True,
-    kind="step",
+    kind='step',
     scale=0.12,
     **plot_kws,
 ):
@@ -139,8 +139,20 @@ def plot_profile(
     
     Parameters
     ----------
-    f : 
-    
+    f : ndarray
+        A 2D image.
+    xcoords, ycoords : list
+        Coordinates of pixel centers.
+    ax : matplotlib.pyplt.Axes
+        The axis on which to plot.
+    profx, profy : bool
+        Whether to plot the x/y profile.
+    kind : {'step', 'bar', 'line'}
+        The type of 1D plot.
+    scale : float
+        Maximum of the 1D plot relative to the axes limits.
+    **plot_kws
+        Key word arguments for the 1D plotting function.
     """
     if xcoords is None:
         xcoords = np.arange(f.shape[1])
@@ -176,16 +188,48 @@ def plot_image(
     profy=False,
     prof_kws=None,
     thresh=None,
-    thresh_type="abs",  # {'abs', 'frac'}
+    thresh_type='abs',
     contour=False,
     contour_kws=None,
     return_mesh=False,
-    handle_log="floor",
+    handle_log='floor',
     fill_value=None,
     mask_zero=False,
     **plot_kws,
 ):
-    """Plot 2D image."""
+    """Plot a 2D image.
+    
+    Parameters
+    ----------
+    f : ndarray
+        A 2D image.
+    x, y : list
+        Coordinates of pixel centers.
+    ax : matplotlib.pyplt.Axes
+        The axis on which to plot.
+    profx, profy : bool
+        Whether to plot the x/y profile.
+    prof_kws : dict
+        Key words arguments for `plot_profile`.
+    thresh : float
+        Set elements below this value to zero.
+    thresh_type : {'abs', 'frac'}
+        If 'frac', `thresh` is a fraction of the maximum element in `f`. 
+    'contour' : bool
+        Whether to plot a contour on top of the image.
+    contour_kws : dict
+        Key word arguments for `ax.contour`.
+    return_mesh : bool
+        Whether to return a mesh from `ax.pcolormesh`.
+    handle_log : {'floor', 'mask'}
+        How to handle zero values if the colormap is logarithmic. (See `prep_image_for_log`.)
+    fill_value : float
+        If not None, fills in masked values of `f`.
+    mask_zero : bool
+        Whether to mask zero values of `f`.
+    **plot_kws
+        Key word arguments for `ax.pcolormesh`.
+    """
     plot_kws.setdefault("ec", "None")
     plot_kws.setdefault("linewidth", 0.0)
     plot_kws.setdefault("rasterized", True)
