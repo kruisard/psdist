@@ -1,5 +1,4 @@
 import numpy as np
-import pickle
 
 
 def cov2corr(cov_mat):
