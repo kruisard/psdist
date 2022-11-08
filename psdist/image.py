@@ -7,6 +7,16 @@ from scipy import ndimage
 from . import utils
 
 
+def get_grid_coords(*coords):
+    """Return mesh coordinates from coordinate arrays along each axis."""
+    return np.vstack([C.ravel() for C in np.meshgrid(*xi, indexing='ij')]).T
+
+
+def get_bin_centers(edges):
+    """Compute bin centers from bin edges."""
+    return 0.5 * (edges[:-1] + edges[1:])
+
+
 def make_slice(n, axis=0, ind=0):
     """Return a slice index array.
     
