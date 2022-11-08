@@ -1,28 +1,29 @@
+"""Accelerator physics functions.""" 
 import numpy as np
 from numpy import linalg as la
 
 
-def _twiss(sigma):
+def twiss_2x2(sigma):
     """Return rms Twiss parameters from u-u' covariance matrix."""
-    eps = _emittance(sigma)
+    eps = emittance_2x2(sigma)
     beta = sigma[0, 0] / eps
     alpha = -sigma[0, 1] / eps
     return alpha, beta
 
 
-def _emittance(sigma):
+def emittance_2x2(sigma):
     """Return rms emittance from u-u' covariance matrix."""
     return np.sqrt(la.det(sigma))
 
 
 def apparent_emittance(Sigma):
     """Return eps_x, eps_y, eps_z."""
-    _emittances = []
+    emittances = []
     for i in range(0, Sigma.shape[0], 2):
-        _emittances.append(_emittance(Sigma[i:i+2, i:i+2]))
-    if len(_emittances) == 1:
-        _emittances = _emittances[0]
-    return _emittances
+        emittances.append(emittance_2x2(Sigma[i:i+2, i:i+2]))
+    if len(emittances) == 1:
+        emittances = emittances[0]
+    return emittances
 
 
 def twiss(Sigma):
@@ -31,7 +32,7 @@ def twiss(Sigma):
     params = []
     for i in range(n):
         j = i * 2
-        params.extend(_twiss(Sigma[j:j+2, j:j+2]))
+        params.extend(twiss_2x2(Sigma[j:j+2, j:j+2]))
     return params
 
 
