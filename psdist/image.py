@@ -9,7 +9,7 @@ from . import utils
 
 def get_grid_coords(*coords):
     """Return mesh coordinates from coordinate arrays along each axis."""
-    return np.vstack([C.ravel() for C in np.meshgrid(*xi, indexing='ij')]).T
+    return np.vstack([C.ravel() for C in np.meshgrid(*coords, indexing='ij')]).T
 
 
 def get_bin_centers(edges):
