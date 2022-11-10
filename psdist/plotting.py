@@ -166,10 +166,12 @@ def plot_profile(
         if pmax > 0:
             profile = profile / pmax
         return profile
-
+    
     px, py = [_normalize(np.sum(f, axis=i)) for i in (1, 0)]
-    yy = ycoords[0] + scale * np.abs(ycoords[-1] - ycoords[0]) * px
+    yy = ycoords[0] + scale * np.abs(ycoords[-1] - ycoords[0]) * px 
     xx = xcoords[0] + scale * np.abs(xcoords[-1] - xcoords[0]) * py
+    yy -= (np.min(yy) - ycoords[0])
+    xx -= (np.min(xx) - xcoords[0])
     for i, (x, y) in enumerate(zip([xcoords, ycoords], [yy, xx])):
         if i == 0 and not profx:
             continue
