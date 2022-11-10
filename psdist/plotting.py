@@ -516,7 +516,7 @@ def corner(
     return axes
 
 
-def _setup_matrix_slice(nrows=9, ncols=9, space=0.1, gap=20.0, **fig_kws):
+def _setup_matrix_slice(nrows=9, ncols=9, space=0.1, gap=2.0, **fig_kws):
     if fig_kws is None:
         fig_kws = dict()
     fig_kws.setdefault('figwidth', 8.5)
@@ -525,10 +525,9 @@ def _setup_matrix_slice(nrows=9, ncols=9, space=0.1, gap=20.0, **fig_kws):
     fig_kws.setdefault('yticks', [])
     fig_kws.setdefault('xspineloc', 'neither')
     fig_kws.setdefault('yspineloc', 'neither')
-    
     hspace = nrows * [space]
     wspace = ncols * [space]
-    hspace[-1] = wspace[-1] = gap * space
+    hspace[-1] = wspace[-1] = gap
     fig, axes = pplt.subplots(
         ncols=ncols+1, nrows=nrows+1, 
         hspace=hspace, wspace=wspace,
@@ -545,8 +544,8 @@ def matrix_slice(
     ncols=9, 
     coords=None, 
     space=0.1,
-    gap=20.0,
-    pad=0,
+    gap=2.0,
+    pad=0.0,
     fig_kws=None,
     plot_kws_marginal_only=None,
     debug=False,
