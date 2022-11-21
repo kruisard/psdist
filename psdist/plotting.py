@@ -92,23 +92,6 @@ def auto_limits(X, sigma=None, **kws):
 
 # Images
 # ------------------------------------------------------------------------------
-def prep_image_for_log(f, method="floor"):
-    """Avoid zeros in image to use logarithmic colormaps.
-    
-    `method=floor` adds the images minimum positive value to the image.
-    `method=mask` masks the zero elements. 
-    """
-    if np.all(f > 0):
-        return f
-    if method == 'floor':
-        floor = 1e-12
-        if np.max(f) > 0:
-            floor = np.min(f[f > 0])
-        return f + floor
-    elif method == 'mask':
-        return np.ma.masked_less_equal(f, 0)
-
-
 def plot1d(x, y, ax=None, flipxy=False, kind="step", **kws):
     """Convenience function for one-dimensional line/step/bar plots."""
     funcs = {
@@ -194,9 +177,9 @@ def plot_image(
     contour=False,
     contour_kws=None,
     return_mesh=False,
-    handle_log='floor',
     fill_value=None,
     mask_zero=False,
+    floor=None,
     **plot_kws,
 ):
     """Plot a 2D image.
@@ -223,12 +206,12 @@ def plot_image(
         Key word arguments for `ax.contour`.
     return_mesh : bool
         Whether to return a mesh from `ax.pcolormesh`.
-    handle_log : {'floor', 'mask'}
-        How to handle zero values if the colormap is logarithmic. (See `prep_image_for_log`.)
     fill_value : float
         If not None, fills in masked values of `f`.
     mask_zero : bool
         Whether to mask zero values of `f`.
+    floor : float
+        Add `floor * min(f[f > 0])` to `f`.
     **plot_kws
         Key word arguments for `ax.pcolormesh`.
     """
@@ -241,15 +224,22 @@ def plot_image(
     if thresh is not None:
         if thresh_type == "frac":
             thresh = thresh * np.max(f)
-        f[f < max(1e-12, thresh)] = 0
+        f[f < max(1.0e-12, thresh)] = 0
+    if mask_zero:
+        f = np.ma.masked_less_equal(f, 0)
+    if floor is not None:
+        _floor = 1.0e-12
+        if np.max(f) > 0.0:
+            f_min_pos = np.min(f[f > 0])
+            floor = floor * f_min_pos
+        f = f + floor
     if log:
+        if np.any(f == 0):
+            raise ValueError("Remove zeros in image to use log colormap. (Use `floor` or `mask_zero` params.)")
         if "colorbar" in plot_kws and plot_kws["colorbar"]:
             if "colorbar_kw" not in plot_kws:
                 plot_kws["colorbar_kw"] = dict()
             plot_kws["colorbar_kw"]["formatter"] = "log"
-        f = prep_image_for_log(f, handle_log)
-    if mask_zero:
-        f = np.ma.masked_less_equal(f, 0)
     if contour_kws is None:
         contour_kws = dict()
     contour_kws.setdefault("color", "white")
@@ -738,7 +728,6 @@ def interactive_proj2d(
     units=None,
     prof_kws=None,
     cmaps=None,
-    handle_log="mask",
     frac_thresh=None,
     **plot_kws,
 ):
@@ -764,8 +753,6 @@ def interactive_proj2d(
         Key word arguments for 1D profile plots.
     cmaps : list
         Color map options for dropdown menu.
-    handle_log : {'floor', 'mask'}
-        See `plot_image`.
     
     Returns
     -------
@@ -793,10 +780,8 @@ def interactive_proj2d(
         cmaps = ["viridis", "dusk_r", "mono_r", "plasma"]
     plot_kws.setdefault("colorbar", True)
     plot_kws["prof_kws"] = prof_kws
-    plot_kws["handle_log"] = handle_log
 
     # Widgets
-    handle_log = widgets.Dropdown(options=["floor", "mask"], description="handle_log")
     cmap = widgets.Dropdown(options=cmaps, description="cmap")
     thresh = widgets.FloatSlider(
         value=-8.0,
@@ -883,7 +868,6 @@ def interactive_proj2d(
 
     # I don't know how else to do this.
     def _update3(
-        handle_log,
         cmap,
         log,
         profiles,
@@ -913,13 +897,11 @@ def interactive_proj2d(
             profiles,
             thresh,
             cmap,
-            handle_log,
             fix_vmax,
             vmax,
         )
 
     def _update4(
-        handle_log,
         cmap,
         log,
         profiles,
@@ -951,13 +933,11 @@ def interactive_proj2d(
             profiles,
             thresh,
             cmap,
-            handle_log,
             fix_vmax,
             vmax,
         )
 
     def _update5(
-        handle_log,
         cmap,
         log,
         profiles,
@@ -991,13 +971,11 @@ def interactive_proj2d(
             profiles,
             thresh,
             cmap,
-            handle_log,
             fix_vmax,
             vmax,
         )
 
     def _update6(
-        handle_log,
         cmap,
         log,
         profiles,
@@ -1033,7 +1011,6 @@ def interactive_proj2d(
             profiles,
             thresh,
             cmap,
-            handle_log,
             fix_vmax,
             vmax,
         )
@@ -1049,7 +1026,6 @@ def interactive_proj2d(
         profiles,
         thresh,
         cmap,
-        handle_log,
         fix_vmax,
         vmax,
     ):
@@ -1074,7 +1050,6 @@ def interactive_proj2d(
                 "thresh_type": "frac",
                 "norm": "log" if log else None,
                 "vmax": vmax if fix_vmax else None,
-                "handle_log": handle_log,
                 "fill_value": 0,
             }
         )
@@ -1096,7 +1071,6 @@ def interactive_proj2d(
     kws["fix_vmax"] = fix_vmax
     kws["vmax"] = vmax
     kws["cmap"] = cmap
-    kws["handle_log"] = handle_log
     gui = interactive(update, **kws)
     return gui
 
