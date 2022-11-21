@@ -235,7 +235,7 @@ def plot_image(
         f = f + floor
     if log:
         if np.any(f == 0):
-            raise ValueError("Remove zeros in image to use log colormap. (Use `floor` or `mask_zero` params.)")
+            f = np.ma.masked_less_equal(f, 0)
         if "colorbar" in plot_kws and plot_kws["colorbar"]:
             if "colorbar_kw" not in plot_kws:
                 plot_kws["colorbar_kw"] = dict()
