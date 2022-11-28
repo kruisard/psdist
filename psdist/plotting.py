@@ -494,7 +494,7 @@ def corner(
         if diag:
             for i in range(n):
                 h = psi.project(data, i)
-                plot1d(coords[i], h / np.max(h), ax=axes[i, i], **diag_kws)
+                plot1d(coords[i], h / np.max(h), ax=axes[i, i], kind=diag_kind, **diag_kws)
     # Modify diagonal y axis limits.
     if diag:
         for i in range(n):
