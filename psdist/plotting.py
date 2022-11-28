@@ -507,6 +507,7 @@ def corner(
 
 
 def _setup_matrix_slice(nrows=9, ncols=9, space=0.1, gap=2.0, **fig_kws):
+    """Set up matrix_slice figure axes."""
     if fig_kws is None:
         fig_kws = dict()
     fig_kws.setdefault('figwidth', 8.5)
@@ -526,6 +527,49 @@ def _setup_matrix_slice(nrows=9, ncols=9, space=0.1, gap=2.0, **fig_kws):
     return fig, axes
 
 
+def _annotate_matrix_slice(axes, islice, iview, dims, height=0.2, 
+                           length=2.5, textlength=0.15, arrowprops=None):
+    """Add labels to the axes of matrix_slice figure."""
+    nrows = axes.shape[0] - 1
+    ncols = axes.shape[1] - 1
+    if arrowprops is None:
+        arrowprops = dict()
+    arrowprops.setdefault('arrowstyle', '->')
+    arrowprops.setdefault('color', 'black')
+    annotate_kws = dict(
+        xycoords='axes fraction', 
+        horizontalalignment='center', 
+        verticalalignment='center',
+    )
+    for sign in (1.0, -1.0):
+        ax = axes[-1, ncols // 2]
+        _height = height + 1.0
+        ax.annotate(
+            '', xy=(0.5 + sign * length, _height),
+            xytext=(0.5 + sign * textlength, _height),
+            arrowprops=arrowprops,
+            **annotate_kws
+        )
+        ax.annotate(dims[islice[0]], xy=(0.5, _height), **annotate_kws)
+
+        ax = axes[nrows // 2, -1]
+        _height = -height
+        ax.annotate(
+            '', xy=(_height, 0.5 + sign * length),
+            xytext=(_height, 0.5 + sign * textlength),
+            arrowprops=arrowprops,
+            **annotate_kws
+        )
+        ax.annotate(dims[islice[1]], xy=(_height, 0.5), **annotate_kws)
+
+    ax = axes[0, 0]
+    ax.annotate(dims[iview[0]], color='white', xy=(0.5, 0.13), xycoords='axes fraction', 
+                horizontalalignment='center', verticalalignment='center')
+    ax.annotate(dims[iview[1]], color='white', xy=(0.12, 0.5), xycoords='axes fraction', 
+                horizontalalignment='center', verticalalignment='center')
+    return axes    
+
+
 def matrix_slice(
     f, 
     axis_view=None, 
@@ -533,6 +577,7 @@ def matrix_slice(
     nrows=9, 
     ncols=9, 
     coords=None, 
+    dims=None,
     space=0.1,
     gap=2.0,
     pad=0.0,
@@ -574,6 +619,8 @@ def matrix_slice(
         The number of slices along each axis in `axis_slice`.
     coords : list[ndarray]
         Coordinates along each axis of the grid (if `data` is an image).
+    dims : list[str]
+        Labels for each dimension. 
     space : float
         Spacing between subplots.
     gap : float
@@ -590,6 +637,8 @@ def matrix_slice(
         plot the 3D marginal distributions.
     debug : bool
         Whether to print debugging messages.
+    annotate : bool
+        Whether to label the axes.
     **plot_kws
         Key word arguments for `plot_image`.
         
@@ -679,6 +728,8 @@ def matrix_slice(
     fig, axes = _setup_matrix_slice(
         nrows=nrows, ncols=ncols, space=space, gap=gap, **fig_kws
     )
+    if dims is not None:
+        axes = _annotate_matrix_slice(axes, axis_slice, axis_view, dims)
     
     for i in range(nrows):
         for j in range(ncols):
@@ -713,7 +764,7 @@ def matrix_slice(
         y=_coords[axis_view[1]],
         ax=axes[-1, -1],
         **plot_kws_marginal_only
-    )
+    )    
     return axes
 
 
