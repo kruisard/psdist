@@ -667,6 +667,10 @@ def matrix_slice(
     _fxy = psi.project(f, axis_view)
     # Compute new coordinates.
     _coords = [coords[i] for i in axis_view + axis_slice]
+    # Compute new dims.
+    _dims = None
+    if dims is not None:
+        _dims = [dims[i] for i in axis_view + axis_slice]
     
     # Select slice indices.
     if type(pad) in [float, int]:
@@ -729,7 +733,7 @@ def matrix_slice(
         nrows=nrows, ncols=ncols, space=space, gap=gap, **fig_kws
     )
     if dims is not None:
-        axes = _annotate_matrix_slice(axes, axis_slice, axis_view, dims)
+        axes = _annotate_matrix_slice(axes, axis_slice, axis_view, _dims)
     
     for i in range(nrows):
         for j in range(ncols):
