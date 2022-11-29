@@ -89,6 +89,6 @@ def lorentz_factors(mass=1.0, kin_energy=1.0):
         beta = absolute velocity divided by the speed of light
         gamma = sqrt(1 - (1/beta)**2)
     """
-    gamma = 1.0 + (kin_energy / mass)
-    beta = np.sqrt(gamma**2 - 1.0) / gamma
+    gamma = 1.0 + (kin_energy / mass)    
+    beta = np.sqrt(1.0 - (1.0 / (gamma**2)))     
     return gamma, beta
