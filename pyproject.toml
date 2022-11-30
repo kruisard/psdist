@@ -19,7 +19,7 @@ classifiers = [
 dependencies = [
     "h5py",
     "ipywidgets",
-    "matplotlib",
+    "matplotlib==3.4.3",
     "numpy",
     "proplot",
     "scipy",
