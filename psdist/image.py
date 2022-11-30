@@ -1,4 +1,4 @@
-"""Functions for phase space images."""
+"""Functions for images."""
 import numpy as np
 from tqdm import trange
 from tqdm import tqdm

@@ -1,6 +1,23 @@
 import numpy as np
 
 
+def symmetrize(M):
+    """Return a symmetrized version of M.
+    
+    M : A square upper or lower triangular matrix.
+    """
+    return M + M.T - np.diag(M.diagonal())
+    
+    
+def rand_rows(X, n):
+    """Return n random elements of X."""
+    Xsamp = np.copy(X)
+    if n < len(X):
+        idx = np.random.choice(Xsamp.shape[0], n, replace=False)
+        Xsamp = Xsamp[idx]
+    return Xsamp
+
+
 def cov2corr(cov_mat):
     """Compute correlation matrix from covariance matrix."""
     D = np.sqrt(np.diag(cov_mat.diagonal()))
@@ -39,9 +56,7 @@ def copy_into_new_dim(a, shape, axis=-1, method='broadcast', copy=False):
 
 # The following three functions are from Tony Yu's blog 
 # (https://tonysyu.github.io/ragged-arrays.html#.YKVwQy9h3OR). 
-# They allow saving/loading ragged arrays in .npz format. This is helpful when 
-# tracking a bunch that is losing/gaining particles; e.g., during turn-by-turn
-# injection.
+# They allow saving/loading ragged arrays in .npz format.
 def stack_ragged(arrays, axis=0):
     """Stacks list of arrays along first axis.
     

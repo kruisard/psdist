@@ -1,4 +1,4 @@
-"""Plotting routines for phase space distributions/images."""
+"""Plotting routines for phase space distributions."""
 from ipywidgets import interactive
 from ipywidgets import widgets
 from matplotlib import pyplot as plt
@@ -425,7 +425,7 @@ def corner(
         for i in range(n):
             heights, _edges = np.histogram(data[:, i], bins, limits[i], density=True)
             heights = heights / np.max(heights)
-            _centers = utils.get_bin_centers(_edges)
+            _centers = psi.get_bin_centers(_edges)
             edges.append(_edges)
             centers.append(_centers)
             if diag:
@@ -1486,7 +1486,7 @@ def interactive_proj2d_discrete(
         yedges = np.histogram_bin_edges(_X[:, 1], bins=_nbins, range=limits[axis_view[1]])
         edges = [xedges, yedges]
         im, _ = np.histogramdd(_X, bins=edges)
-        centers = [utils.get_bin_centers(e) for e in edges]
+        centers = [psi.get_bin_centers(e) for e in edges]
         
         # Plot image.
         plot_kws['norm'] = 'log' if log else None

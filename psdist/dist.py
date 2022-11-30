@@ -1,4 +1,4 @@
-"""Functions for phase space distributions (point clouds)."""
+"""Functions for point clouds."""
 import numpy as np
 from . import ap
 from . import utils
