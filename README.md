@@ -1,3 +1,3 @@
 # psdist
 
-Analysis/visualization of phase space distributions
+Analysis/visualization of phase space distributions.
