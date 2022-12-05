@@ -89,6 +89,16 @@ def auto_limits(X, sigma=None, **kws):
     mins, maxs = process_limits(mins, maxs, **kws)
     return [(lo, hi) for lo, hi in zip(mins, maxs)]
 
+def draw_ellipse(alpha,beta,emittance,ax=None):
+    """
+    Draw phase space ellipse given alpha, beta, emittance
+    """
+    theta = np.linspace(0,2*np.pi,100)
+    x = np.sqrt(emittance)*np.cos(theta); 
+    xp = np.sqrt(emittance)*np.sin(theta)
+    xp = -alpha * x/np.sqrt(beta) - xp/np.sqrt(beta)
+    x = x * np.sqrt(beta)
+    ax.plot(x,xp,'-')
 
 # Images
 # ------------------------------------------------------------------------------
