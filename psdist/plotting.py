@@ -219,6 +219,8 @@ def plot_image(
     plot_kws.setdefault("linewidth", 0.0)
     plot_kws.setdefault("rasterized", True)
     log = "norm" in plot_kws and plot_kws["norm"] == "log"
+    
+    f = f.copy()
     if fill_value is not None:
         f = np.ma.filled(f, fill_value=fill_value)
     if thresh is not None:
