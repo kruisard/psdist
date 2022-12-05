@@ -7,7 +7,8 @@ def twiss_2x2(sigma):
     """Return rms Twiss parameters from u-u' covariance matrix."""
     eps = emittance_2x2(sigma)
     beta = sigma[0, 0] / eps
-    alpha = -sigma[0, 1] / eps
+    gamma = sigma[0, 1] / eps
+    alpha = -np.sign(sigma[0, 1]) * np.sqrt(gamma*beta-1)
     return alpha, beta
 
 
