@@ -198,3 +198,14 @@ def norm_xxp_yyp_zzp(X, scale_emittance=False):
             eps = ap.apparent_emittance(sigma)
             Xn[:, i:i+2] = Xn[:, i:i+2] / np.sqrt(eps)
     return Xn
+
+
+def decorrelate(X):
+    """Remove cross-plane correlations in the bunch by permuting 
+    (x, x'), (y, y'), (z, z') pairs."""
+    if X.shape[1] ~= 6:
+        raise ValueError('X must have 6 columns.')
+    for i in (0, 2, 4):
+        idx = np.random.permutation(np.arange(X.shape[0]))
+        X[:, i:i+2] = X[idx, i:i+2]
+    return X
