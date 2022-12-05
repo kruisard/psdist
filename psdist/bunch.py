@@ -1,4 +1,4 @@
-"""Functions for point clouds."""
+"""Functions for bunches (point clouds)."""
 import numpy as np
 from . import ap
 from . import utils
